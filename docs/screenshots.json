@@ -57,7 +57,7 @@
         },
         {
             "id": "site-monitor-target-form",
-            "url": "/site-monitor/targets/{first-record}/edit",
+            "url": "/screenshot-fixtures/site-monitor/target",
             "title": "Site Monitor target form.",
             "package": "site-monitor",
             "surface": "admin",
@@ -65,28 +65,14 @@
             "target": "SiteMonitorTargetResource.edit",
             "required": false,
             "screenshotPath": "packages/site-monitor/docs/screenshots/site-monitor-target-form.png",
-            "notes": "Capture the target setup form once the admin runner can expose the resource, including URL, check type, interval, notification policy, and enabled state.",
+            "notes": "The guarded fixture seeds a disabled demo target and open incident, then redirects to the actual resource. No outbound check runs. Require the resource field or populated row.",
             "useCase": "An operator configures what Capell should monitor for a site.",
             "scenario": "admin-form",
-            "waitFor": "form"
-        },
-        {
-            "id": "site-monitor-check-history",
-            "title": "Site Monitor check history.",
-            "package": "site-monitor",
-            "surface": "admin",
-            "targetType": "admin-resource",
-            "target": "SiteMonitorCheckResource",
-            "required": false,
-            "screenshotPath": "packages/site-monitor/docs/screenshots/site-monitor-check-history.png",
-            "notes": "Capture check history with uptime, SSL, domain-expiry, and failed-response evidence when a route-backed admin resource is available.",
-            "useCase": "An operator compares recent checks before deciding whether an incident is resolved.",
-            "scenario": "admin-index",
-            "waitFor": "table"
+            "waitFor": "input[id=\"data.url\"]"
         },
         {
             "id": "site-monitor-targets-index",
-            "url": "/site-monitor/targets",
+            "url": "/screenshot-fixtures/site-monitor/targets",
             "title": "Site Monitor targets index.",
             "package": "site-monitor",
             "surface": "admin",
@@ -94,14 +80,14 @@
             "target": "SiteMonitorTargetResource.index",
             "required": false,
             "screenshotPath": "packages/site-monitor/docs/screenshots/site-monitor-targets-index.png",
-            "notes": "Capture enabled, disabled, passing, warning, and failing targets with latest run and open incident indicators visible.",
+            "notes": "The guarded fixture seeds a disabled demo target and open incident, then redirects to the actual resource. No outbound check runs. Require the resource field or populated row.",
             "useCase": "An operator scans every monitored target and identifies which ones need attention.",
             "scenario": "admin-index",
-            "waitFor": "table"
+            "waitFor": ".fi-ta tbody tr:has-text(\"Screenshot homepage\")"
         },
         {
             "id": "site-monitor-incident-resolution-form",
-            "url": "/site-monitor/incidents/{first-record}/edit",
+            "url": "/screenshot-fixtures/site-monitor/incident",
             "title": "Site Monitor incident resolution form.",
             "package": "site-monitor",
             "surface": "admin",
@@ -109,10 +95,10 @@
             "target": "SiteMonitorIncidentResource.edit",
             "required": false,
             "screenshotPath": "packages/site-monitor/docs/screenshots/site-monitor-incident-resolution-form.png",
-            "notes": "Capture an open incident edit screen with target, latest failing run, status, and resolution fields visible.",
+            "notes": "The guarded fixture seeds a disabled demo target and open incident, then redirects to the actual resource. No outbound check runs. Require the resource field or populated row.",
             "useCase": "An operator documents why an outage is resolved and keeps the incident audit trail clear.",
             "scenario": "admin-form",
-            "waitFor": "form"
+            "waitFor": "textarea[id=\"data.summary\"]"
         },
         {
             "id": "site-monitor-admin-sidebar-menu-open",

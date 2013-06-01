@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Capell\SiteMonitor\Actions\BuildSiteMonitorDashboardAction;
+use Capell\SiteMonitor\Actions\PrepareSiteMonitorScreenshotAction;
 use Capell\SiteMonitor\Enums\SiteMonitorCheckType;
 use Capell\SiteMonitor\Enums\SiteMonitorIncidentStatus;
 use Capell\SiteMonitor\Enums\SiteMonitorState;
@@ -11,6 +12,30 @@ use Capell\SiteMonitor\Models\SiteMonitorRun;
 use Capell\SiteMonitor\Models\SiteMonitorTarget;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
+
+it('seeds distinct target and incident capture records without scheduling a network check', function (): void {
+    Http::preventStrayRequests();
+    Queue::fake();
+    putenv('CAPELL_SCREENSHOT_FIXTURE=record-state');
+
+    try {
+        $action = new PrepareSiteMonitorScreenshotAction;
+        $target = $action->handle();
+        expect($action->handle()->getKey())->toBe($target->getKey())
+            ->and($target->name)->toBe('Screenshot homepage')
+            ->and($target->enabled)->toBeFalse()
+            ->and($target->openIncident()->firstOrFail()->summary)->toBe('Screenshot homepage returned a demo 503 response.')
+            ->and($target->incidents()->count())->toBe(1);
+        $dashboard = BuildSiteMonitorDashboardAction::run();
+        expect($dashboard->failingTargets)->toBe(1)->and($dashboard->openIncidents)->toBe(1);
+        Http::assertNothingSent();
+        Queue::assertNothingPushed();
+    } finally {
+        putenv('CAPELL_SCREENSHOT_FIXTURE');
+    }
+});
 
 it('keeps dashboard aggregation inside the declared admin query budget', function (): void {
     $passingTarget = createDashboardSiteMonitorTarget('Passing homepage', SiteMonitorState::Passing, [
