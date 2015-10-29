@@ -57,6 +57,7 @@
         },
         {
             "id": "site-monitor-target-form",
+            "url": "/site-monitor/targets/{first-record}/edit",
             "title": "Site Monitor target form.",
             "package": "site-monitor",
             "surface": "admin",
@@ -85,6 +86,7 @@
         },
         {
             "id": "site-monitor-targets-index",
+            "url": "/site-monitor/targets",
             "title": "Site Monitor targets index.",
             "package": "site-monitor",
             "surface": "admin",
@@ -99,6 +101,7 @@
         },
         {
             "id": "site-monitor-incident-resolution-form",
+            "url": "/site-monitor/incidents/{first-record}/edit",
             "title": "Site Monitor incident resolution form.",
             "package": "site-monitor",
             "surface": "admin",
@@ -113,6 +116,7 @@
         },
         {
             "id": "site-monitor-admin-sidebar-menu-open",
+            "url": "/site-monitor",
             "colorSchemes": ["light"],
             "title": "Site Monitor dashboard with admin sidebar menu open.",
             "package": "site-monitor",
@@ -120,11 +124,10 @@
             "targetType": "rendered-admin-proof",
             "target": "site-monitor-dashboard-proof",
             "required": false,
-            "path": "docs/screenshots/site-monitor-dashboard.png",
             "screenshotPath": "packages/site-monitor/docs/screenshots/site-monitor-admin-sidebar-menu-open.png",
             "notes": "Committed data-backed dashboard proof with seeded target state, open incidents, and latest check evidence. Capture this same admin surface with the fully collapsible sidebar opened.",
             "useCase": "An operator reviews target state, open incidents, and latest check evidence.",
-            "scenario": "static-html",
+            "scenario": "admin-index",
             "waitFor": ".fi-page, main",
             "beforeWait": [
                 {
