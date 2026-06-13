@@ -1,0 +1,240 @@
+{
+    "manifest-version": 3,
+    "name": "capell-app/site-monitor",
+    "slug": "site-monitor",
+    "displayName": "Site Monitor",
+    "kind": "package",
+    "capellApiVersion": "^4.0",
+    "version": "4.x-dev",
+    "description": "External uptime, SSL certificate, domain expiry, and incident monitoring for Capell sites.",
+    "product": {
+        "group": "Capell Operations",
+        "tier": "premium",
+        "bundle": "operations"
+    },
+    "namespace": "Capell\\SiteMonitor",
+    "surfaces": ["admin", "console", "shared"],
+    "dependencies": {
+        "requires": [
+            "capell-app/admin",
+            "capell-app/core",
+            "capell-app/frontend"
+        ],
+        "supports": [
+            "capell-app/diagnostics",
+            "capell-app/email-studio",
+            "capell-app/exception-reports",
+            "capell-app/seo-suite",
+            "capell-app/site-discovery",
+            "capell-app/url-manager"
+        ],
+        "conflicts": []
+    },
+    "providers": {
+        "metadata": [],
+        "install": [],
+        "runtime": [
+            "Capell\\SiteMonitor\\Providers\\SiteMonitorServiceProvider"
+        ],
+        "admin": ["Capell\\SiteMonitor\\Providers\\AdminServiceProvider"],
+        "frontend": []
+    },
+    "contributes": [
+        {
+            "type": "admin-page",
+            "class": "Capell\\SiteMonitor\\Manifest\\SiteMonitorDashboardPageContribution",
+            "pageClass": "Capell\\SiteMonitor\\Filament\\Pages\\SiteMonitorDashboardPage",
+            "labelKey": "capell-site-monitor::package.navigation.dashboard"
+        },
+        {
+            "type": "admin-resource",
+            "class": "Capell\\SiteMonitor\\Manifest\\SiteMonitorTargetResourceContribution",
+            "resourceClass": "Capell\\SiteMonitor\\Filament\\Resources\\SiteMonitorTargets\\SiteMonitorTargetResource"
+        },
+        {
+            "type": "admin-resource",
+            "class": "Capell\\SiteMonitor\\Manifest\\SiteMonitorIncidentResourceContribution",
+            "resourceClass": "Capell\\SiteMonitor\\Filament\\Resources\\SiteMonitorIncidents\\SiteMonitorIncidentResource"
+        },
+        {
+            "type": "model",
+            "class": "Capell\\SiteMonitor\\Manifest\\SiteMonitorTargetModelContribution",
+            "modelClasses": ["Capell\\SiteMonitor\\Models\\SiteMonitorTarget"]
+        },
+        {
+            "type": "model",
+            "class": "Capell\\SiteMonitor\\Manifest\\SiteMonitorRunModelContribution",
+            "modelClasses": ["Capell\\SiteMonitor\\Models\\SiteMonitorRun"]
+        },
+        {
+            "type": "model",
+            "class": "Capell\\SiteMonitor\\Manifest\\SiteMonitorIncidentModelContribution",
+            "modelClasses": ["Capell\\SiteMonitor\\Models\\SiteMonitorIncident"]
+        },
+        {
+            "type": "scheduled-job",
+            "class": "Capell\\SiteMonitor\\Manifest\\SiteMonitorScheduledChecksContribution",
+            "command": "capell:site-monitor:run",
+            "frequency": "everyMinute"
+        }
+    ],
+    "database": {
+        "migrations": true,
+        "settings": false,
+        "requiredTables": [
+            "site_monitor_targets",
+            "site_monitor_runs",
+            "site_monitor_incidents"
+        ]
+    },
+    "commands": {
+        "install": null,
+        "setup": null,
+        "demo": null,
+        "doctor": "capell:site-monitor:doctor"
+    },
+    "actions": {
+        "buildSiteMonitorDashboard": "Capell\\SiteMonitor\\Actions\\BuildSiteMonitorDashboardAction",
+        "recordSiteMonitorRun": "Capell\\SiteMonitor\\Actions\\RecordSiteMonitorRunAction",
+        "reconcileSiteMonitorIncident": "Capell\\SiteMonitor\\Actions\\ReconcileSiteMonitorIncidentAction",
+        "resolveSiteMonitorTargets": "Capell\\SiteMonitor\\Actions\\ResolveSiteMonitorTargetsAction",
+        "runDueSiteMonitorChecks": "Capell\\SiteMonitor\\Actions\\RunDueSiteMonitorChecksAction",
+        "runSiteMonitorCheck": "Capell\\SiteMonitor\\Actions\\RunSiteMonitorCheckAction"
+    },
+    "settings": [],
+    "permissions": [
+        "View:SiteMonitorTarget",
+        "Create:SiteMonitorTarget",
+        "Update:SiteMonitorTarget",
+        "Delete:SiteMonitorTarget",
+        "View:SiteMonitorIncident",
+        "Update:SiteMonitorIncident"
+    ],
+    "capabilities": [
+        "site-monitor",
+        "uptime-monitoring",
+        "ssl-expiry-monitoring",
+        "domain-expiry-monitoring",
+        "incident-tracking",
+        "scheduled-checks",
+        "operations-admin"
+    ],
+    "security": {
+        "riskTier": "standard",
+        "publicSurface": {
+            "routeNames": [],
+            "auth": "none",
+            "csrfExemptRoutes": [],
+            "signedRoutes": [],
+            "tokenizedRoutes": [],
+            "webhookRoutes": [],
+            "throttledRoutes": []
+        },
+        "sensitiveData": {
+            "encryptedFields": [],
+            "hashedTokenFields": [],
+            "redactedOutputClasses": [
+                "Capell\\SiteMonitor\\Support\\LaravelSiteMonitorHttpClient"
+            ],
+            "plaintextJustifications": []
+        },
+        "publicOutput": {
+            "cacheSafe": true,
+            "forbidAuthoringSurface": true,
+            "forbidSecrets": true,
+            "forbidPublicBladeQueries": true
+        },
+        "externalHttpClients": {
+            "requiresTimeouts": true,
+            "requiresSecretRedaction": false,
+            "clients": [
+                "Capell\\SiteMonitor\\Support\\LaravelSiteMonitorHttpClient",
+                "Capell\\SiteMonitor\\Support\\RdapDomainExpiryClient"
+            ]
+        },
+        "adminSurface": {
+            "authorization": "package-installed",
+            "permissions": [
+                "View:SiteMonitorTarget",
+                "Create:SiteMonitorTarget",
+                "Update:SiteMonitorTarget",
+                "Delete:SiteMonitorTarget",
+                "View:SiteMonitorIncident",
+                "Update:SiteMonitorIncident"
+            ]
+        }
+    },
+    "performance": {
+        "frontendRenderBudgetMs": 0,
+        "adminQueryBudget": 20,
+        "cacheTags": ["site-monitor"],
+        "cacheSafety": {
+            "cacheable": false,
+            "variesBy": [],
+            "sensitiveOutput": false,
+            "invalidationSources": [],
+            "queueInvalidation": true
+        }
+    },
+    "healthChecks": [
+        {
+            "key": "site-monitor.storage",
+            "label": "Site Monitor storage tables are available",
+            "class": "Capell\\SiteMonitor\\Health\\SiteMonitorHealthCheck",
+            "severity": "critical",
+            "surface": "admin"
+        },
+        {
+            "key": "site-monitor.command",
+            "label": "Site Monitor scheduled command is available",
+            "class": "Capell\\SiteMonitor\\Health\\SiteMonitorHealthCheck",
+            "severity": "critical",
+            "surface": "admin"
+        },
+        {
+            "key": "site-monitor.target-freshness",
+            "label": "Enabled monitor targets are being checked recently",
+            "class": "Capell\\SiteMonitor\\Health\\SiteMonitorHealthCheck",
+            "severity": "warning",
+            "surface": "admin"
+        },
+        {
+            "key": "site-monitor.open-incidents",
+            "label": "No Site Monitor incidents are open",
+            "class": "Capell\\SiteMonitor\\Health\\SiteMonitorHealthCheck",
+            "severity": "warning",
+            "surface": "admin"
+        }
+    ],
+    "commercial": {
+        "proposedLicense": "paid",
+        "requestedCertification": "review-required",
+        "supportPolicy": "priority",
+        "privateDocsRequested": true
+    },
+    "marketplace": {
+        "summary": "External uptime, SSL, domain, and incident monitoring for Capell sites.",
+        "description": "Site Monitor checks public URLs, SSL certificates, and domain expiry from scheduled jobs outside the public render path, then records runs and incidents for operators inside Capell admin.",
+        "screenshots": [
+            {
+                "path": "docs/assets/marketplace/extension-card.svg",
+                "alt": "Site Monitor extension preview image",
+                "caption": "Site Monitor extension preview for Marketplace cards."
+            },
+            {
+                "path": "docs/assets/marketplace/dashboard.svg",
+                "alt": "Site Monitor dashboard preview",
+                "caption": "Admin dashboard showing target health, open incidents, and latest checks."
+            },
+            {
+                "path": "docs/assets/marketplace/incident.svg",
+                "alt": "Site Monitor incident preview",
+                "caption": "Incident detail showing failing target evidence and resolution state."
+            }
+        ],
+        "categories": ["operations", "monitoring", "admin"]
+    },
+    "contributionTraceability": {
+        "deferredContributions": ["queue-job"]
+    }
+}

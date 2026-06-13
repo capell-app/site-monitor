@@ -1,0 +1,48 @@
+{
+    "package": "site-monitor",
+    "composerName": "capell-app/site-monitor",
+    "generatedFor": "deployment-screenshot-runner",
+    "requiresInstalledPackage": true,
+    "outputDirectory": "packages/site-monitor/docs/screenshots",
+    "entries": [
+        {
+            "id": "site-monitor-extension-card",
+            "title": "Site Monitor extension card.",
+            "package": "site-monitor",
+            "surface": "marketplace",
+            "targetType": "marketplace-asset",
+            "target": "extension-card",
+            "required": true,
+            "path": "docs/assets/marketplace/extension-card.svg",
+            "screenshotPath": "packages/site-monitor/docs/assets/marketplace/extension-card.svg",
+            "notes": "Committed Marketplace card preview for Site Monitor.",
+            "useCase": "An operator reviews the extension card before enabling site monitoring."
+        },
+        {
+            "id": "site-monitor-dashboard",
+            "title": "Site Monitor dashboard.",
+            "package": "site-monitor",
+            "surface": "admin",
+            "targetType": "marketplace-asset",
+            "target": "dashboard",
+            "required": true,
+            "path": "docs/assets/marketplace/dashboard.svg",
+            "screenshotPath": "packages/site-monitor/docs/assets/marketplace/dashboard.svg",
+            "notes": "Committed admin dashboard preview until real captures are available.",
+            "useCase": "An operator reviews target state, open incidents, and latest check evidence."
+        },
+        {
+            "id": "site-monitor-incident",
+            "title": "Site Monitor incident detail.",
+            "package": "site-monitor",
+            "surface": "admin",
+            "targetType": "marketplace-asset",
+            "target": "incident",
+            "required": true,
+            "path": "docs/assets/marketplace/incident.svg",
+            "screenshotPath": "packages/site-monitor/docs/assets/marketplace/incident.svg",
+            "notes": "Committed incident preview until real captures are available.",
+            "useCase": "An operator inspects failure evidence and resolution state."
+        }
+    ]
+}
