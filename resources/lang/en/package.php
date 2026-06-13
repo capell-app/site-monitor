@@ -1,0 +1,124 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'navigation' => [
+        'dashboard' => 'Site monitor',
+    ],
+    'dashboard' => [
+        'subheading' => 'Track public URL checks, certificate expiry, domain expiry, and open incidents outside the public render path.',
+        'total_targets' => 'Targets',
+        'enabled_targets' => 'Enabled',
+        'passing_targets' => 'Passing',
+        'warning_targets' => 'Warnings',
+        'failing_targets' => 'Failing',
+        'open_incidents' => 'Open incidents',
+        'latest_checked_at' => 'Latest check',
+        'oldest_open_incident_at' => 'Oldest incident',
+        'median_response_ms' => 'Median response',
+        'no_data' => 'No data yet',
+        'milliseconds' => ':value ms',
+    ],
+    'resources' => [
+        'targets' => 'Monitor targets',
+        'incidents' => 'Monitor incidents',
+    ],
+    'fields' => [
+        'name' => 'Name',
+        'url' => 'URL',
+        'check_type' => 'Check type',
+        'enabled' => 'Enabled',
+        'site_id' => 'Site ID',
+        'language_id' => 'Language ID',
+        'interval_minutes' => 'Interval minutes',
+        'timeout_ms' => 'Timeout milliseconds',
+        'failure_threshold' => 'Failure threshold',
+        'expected_status_minimum' => 'Minimum expected status',
+        'expected_status_maximum' => 'Maximum expected status',
+        'source_package' => 'Source package',
+        'source_key' => 'Source key',
+        'route_name' => 'Route name',
+        'metadata' => 'Metadata',
+        'current_state' => 'Current state',
+        'response_ms' => 'Response',
+        'consecutive_failures' => 'Consecutive failures',
+        'last_checked_at' => 'Last checked',
+        'next_check_at' => 'Next check',
+        'target' => 'Target',
+        'status' => 'Status',
+        'severity' => 'Severity',
+        'summary' => 'Summary',
+        'failure_count' => 'Failure count',
+        'opened_at' => 'Opened',
+        'last_failure_at' => 'Last failure',
+        'resolved_at' => 'Resolved',
+    ],
+    'check_types' => [
+        'http_status' => 'HTTP status',
+        'ssl_certificate' => 'SSL certificate',
+        'domain_expiry' => 'Domain expiry',
+    ],
+    'states' => [
+        'unknown' => 'Unknown',
+        'passing' => 'Passing',
+        'warning' => 'Warning',
+        'failing' => 'Failing',
+    ],
+    'incident_statuses' => [
+        'open' => 'Open',
+        'resolved' => 'Resolved',
+    ],
+    'actions' => [
+        'run_due_checks' => 'Run due checks',
+        'run_now' => 'Run now',
+    ],
+    'notifications' => [
+        'checks_queued' => '{0} No due monitor checks were queued.|{1} Queued one due monitor check.|[2,*] Queued :count due monitor checks.',
+        'target_checked' => 'Monitor check completed: :state.',
+    ],
+    'commands' => [
+        'run' => [
+            'description' => 'Run due Site Monitor checks.',
+            'completed' => '{0} No due monitor checks found.|{1} Processed one due monitor check.|[2,*] Processed :count due monitor checks.',
+        ],
+        'doctor' => [
+            'description' => 'Run Site Monitor diagnostics without executing monitor checks.',
+            'completed' => 'Site Monitor diagnostics passed :passed of :total checks.',
+            'columns' => [
+                'check' => 'Check',
+                'status' => 'Status',
+                'message' => 'Message',
+            ],
+            'passed' => 'Passed',
+            'failed' => 'Failed',
+        ],
+    ],
+    'health' => [
+        'storage' => [
+            'label' => 'Site Monitor storage',
+            'passed' => 'Site Monitor database tables are available.',
+            'failed' => 'Site Monitor is missing database tables: :tables.',
+            'remediation' => 'Run the Site Monitor migrations before enabling scheduled checks.',
+        ],
+        'command' => [
+            'label' => 'Site Monitor command',
+            'passed' => 'The scheduled monitor command class is available.',
+            'failed' => 'The scheduled monitor command class could not be loaded.',
+            'remediation' => 'Reinstall the package or clear optimized autoload files.',
+        ],
+        'target_freshness' => [
+            'label' => 'Site Monitor freshness',
+            'empty' => 'No enabled monitor targets are configured yet.',
+            'passed' => ':count enabled monitor targets are fresh.',
+            'failed' => ':count enabled monitor targets are stale.',
+            'remediation' => 'Run capell:site-monitor:run and check queue workers if targets remain stale.',
+        ],
+        'incidents' => [
+            'label' => 'Site Monitor incidents',
+            'passed' => 'No open monitor incidents are active.',
+            'failed' => '{1} One monitor incident is open.|[2,*] :count monitor incidents are open.',
+            'remediation' => 'Review failing targets in the Site Monitor incidents resource.',
+        ],
+    ],
+];
