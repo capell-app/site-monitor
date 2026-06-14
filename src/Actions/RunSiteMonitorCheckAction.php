@@ -9,6 +9,7 @@ use Capell\SiteMonitor\Contracts\SiteMonitorHttpClient;
 use Capell\SiteMonitor\Data\SiteMonitorCheckResultData;
 use Capell\SiteMonitor\Enums\SiteMonitorCheckType;
 use Capell\SiteMonitor\Enums\SiteMonitorState;
+use Capell\SiteMonitor\Exceptions\UnsafeSiteMonitorTargetException;
 use Capell\SiteMonitor\Models\SiteMonitorTarget;
 use Carbon\CarbonImmutable;
 use Lorisleiva\Actions\Concerns\AsAction;
@@ -30,6 +31,12 @@ final class RunSiteMonitorCheckAction
 
     private function checkHttpStatus(SiteMonitorTarget $target): SiteMonitorCheckResultData
     {
+        try {
+            GuardSiteMonitorOutboundUrlAction::run($target->url);
+        } catch (UnsafeSiteMonitorTargetException $exception) {
+            return $this->expiryFailure($exception->errorType, $exception->getMessage());
+        }
+
         $result = resolve(SiteMonitorHttpClient::class)->check($target);
 
         if ($result->statusCode === null) {
@@ -76,10 +83,10 @@ final class RunSiteMonitorCheckAction
 
     private function checkSslCertificate(SiteMonitorTarget $target): SiteMonitorCheckResultData
     {
-        $host = $this->hostFor($target->url);
-
-        if ($host === null) {
-            return $this->expiryFailure('invalid_url', 'Target URL does not contain a host.');
+        try {
+            $host = GuardSiteMonitorOutboundUrlAction::run($target->url);
+        } catch (UnsafeSiteMonitorTargetException $exception) {
+            return $this->expiryFailure($exception->errorType, $exception->getMessage());
         }
 
         $expiresAt = $this->sslCertificateExpiresAt($host, $target->timeout_ms);
@@ -93,10 +100,10 @@ final class RunSiteMonitorCheckAction
 
     private function checkDomainExpiry(SiteMonitorTarget $target): SiteMonitorCheckResultData
     {
-        $host = $this->hostFor($target->url);
-
-        if ($host === null) {
-            return $this->expiryFailure('invalid_url', 'Target URL does not contain a host.');
+        try {
+            $host = GuardSiteMonitorOutboundUrlAction::run($target->url);
+        } catch (UnsafeSiteMonitorTargetException $exception) {
+            return $this->expiryFailure($exception->errorType, $exception->getMessage());
         }
 
         $expiresAt = resolve(SiteMonitorDomainExpiryClient::class)->expiresAt($host);
@@ -154,13 +161,6 @@ final class RunSiteMonitorCheckAction
             errorType: $type,
             errorMessage: $message,
         );
-    }
-
-    private function hostFor(string $url): ?string
-    {
-        $host = parse_url($url, PHP_URL_HOST);
-
-        return is_string($host) && $host !== '' ? strtolower($host) : null;
     }
 
     private function sslCertificateExpiresAt(string $host, int $timeoutMs): ?CarbonImmutable

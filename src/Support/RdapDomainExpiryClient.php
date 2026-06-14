@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Capell\SiteMonitor\Support;
 
+use Capell\SiteMonitor\Actions\GuardSiteMonitorOutboundUrlAction;
 use Capell\SiteMonitor\Contracts\SiteMonitorDomainExpiryClient;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Http;
@@ -29,6 +30,8 @@ final class RdapDomainExpiryClient implements SiteMonitorDomainExpiryClient
         $url = str_replace('{domain}', rawurlencode($domain), $template);
 
         try {
+            GuardSiteMonitorOutboundUrlAction::run($url);
+
             $response = Http::timeout(max(1, (int) ceil($this->integerConfig('capell-site-monitor.rdap_timeout_ms', 5000) / 1000)))
                 ->acceptJson()
                 ->get($url);

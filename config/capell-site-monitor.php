@@ -8,6 +8,8 @@ return [
     'default_failure_threshold' => 2,
     'batch_size' => 50,
     'warning_response_ms' => 1500,
+    'allow_private_targets' => false,
+    'max_redirects' => 5,
     'ssl_expiry_warning_days' => 30,
     'domain_expiry_warning_days' => 45,
     'run_retention_days' => 30,

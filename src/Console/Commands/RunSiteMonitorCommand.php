@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Capell\SiteMonitor\Console\Commands;
 
+use Capell\SiteMonitor\Actions\PruneSiteMonitorRunsAction;
 use Capell\SiteMonitor\Actions\RunDueSiteMonitorChecksAction;
 use Illuminate\Console\Command;
 use Override;
@@ -36,6 +37,16 @@ final class RunSiteMonitorCommand extends Command
             $count,
             ['count' => $count],
         ));
+
+        $prunedRuns = PruneSiteMonitorRunsAction::run();
+
+        if ($prunedRuns > 0) {
+            $this->components->info((string) trans_choice(
+                'capell-site-monitor::package.commands.run.pruned',
+                $prunedRuns,
+                ['count' => $prunedRuns],
+            ));
+        }
 
         return self::SUCCESS;
     }
