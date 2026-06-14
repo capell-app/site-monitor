@@ -80,7 +80,7 @@ final class SiteMonitorServiceProvider extends AbstractPackageServiceProvider
 
     private function registerModels(): self
     {
-        CapellCore::registerModels([
+        $this->surface()->models([
             SiteMonitorTarget::class,
             SiteMonitorRun::class,
             SiteMonitorIncident::class,
