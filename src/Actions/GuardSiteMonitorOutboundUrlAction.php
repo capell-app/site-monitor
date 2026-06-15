@@ -7,6 +7,9 @@ namespace Capell\SiteMonitor\Actions;
 use Capell\SiteMonitor\Exceptions\UnsafeSiteMonitorTargetException;
 use Lorisleiva\Actions\Concerns\AsAction;
 
+/**
+ * @method static string run(string $url)
+ */
 final class GuardSiteMonitorOutboundUrlAction
 {
     use AsAction;
@@ -78,17 +81,15 @@ final class GuardSiteMonitorOutboundUrlAction
         $records = @dns_get_record($host, DNS_A | DNS_AAAA);
         $addresses = [];
 
-        if (is_array($records)) {
-            foreach ($records as $record) {
-                if (! is_array($record)) {
-                    continue;
-                }
+        if ($records === false) {
+            $records = [];
+        }
 
-                $address = $record['ip'] ?? $record['ipv6'] ?? null;
+        foreach ($records as $record) {
+            $address = $record['ip'] ?? $record['ipv6'] ?? null;
 
-                if (is_string($address) && filter_var($address, FILTER_VALIDATE_IP) !== false) {
-                    $addresses[] = $address;
-                }
+            if (is_string($address) && filter_var($address, FILTER_VALIDATE_IP) !== false) {
+                $addresses[] = $address;
             }
         }
 
