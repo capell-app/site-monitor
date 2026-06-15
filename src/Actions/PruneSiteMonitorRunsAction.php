@@ -33,7 +33,9 @@ final class PruneSiteMonitorRunsAction
             $query->whereNotIn('id', $protectedRunIds);
         }
 
-        return (int) $query->delete();
+        $deleted = $query->delete();
+
+        return is_int($deleted) ? $deleted : 0;
     }
 
     /**
