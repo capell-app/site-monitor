@@ -43,9 +43,9 @@ Screenshot contract: `docs/screenshots.json`.
 - Actions: `BuildSiteMonitorDashboardAction`, `GuardSiteMonitorOutboundUrlAction`, `PruneSiteMonitorRunsAction`, `ReconcileSiteMonitorIncidentAction`, `RecordSiteMonitorRunAction`, `ResolveSiteMonitorTargetsAction`, `RunDueSiteMonitorChecksAction`, `RunSiteMonitorCheckAction`.
 - Data objects: `SiteMonitorCheckResultData`, `SiteMonitorDashboardData`, `SiteMonitorIncidentData`, `SiteMonitorTargetData`.
 - Jobs: `RunSiteMonitorTargetJob`.
-- Command signatures: `capell:site-monitor:doctor`.
+- Command signatures: `capell:site-monitor:doctor`, `capell:site-monitor:run`.
 - Console command classes: `RunSiteMonitorCommand`, `SiteMonitorDoctorCommand`.
-- Manifest contributions: `admin-page: Capell\SiteMonitor\Manifest\SiteMonitorDashboardPageContribution`, `admin-resource: Capell\SiteMonitor\Manifest\SiteMonitorIncidentResourceContribution`, `admin-resource: Capell\SiteMonitor\Manifest\SiteMonitorTargetResourceContribution`, `model: Capell\SiteMonitor\Manifest\SiteMonitorIncidentModelContribution`, `model: Capell\SiteMonitor\Manifest\SiteMonitorRunModelContribution`, `model: Capell\SiteMonitor\Manifest\SiteMonitorTargetModelContribution`, `scheduled-job: Capell\SiteMonitor\Manifest\SiteMonitorScheduledChecksContribution`.
+- Manifest contributions: `admin-page: Capell\SiteMonitor\Manifest\SiteMonitorDashboardPageContribution`, `admin-resource: Capell\SiteMonitor\Manifest\SiteMonitorIncidentResourceContribution`, `admin-resource: Capell\SiteMonitor\Manifest\SiteMonitorTargetResourceContribution`, `console-command: Capell\SiteMonitor\Manifest\SiteMonitorConsoleCommandsContribution`, `health-check: Capell\SiteMonitor\Manifest\SiteMonitorHealthContribution`, `model: Capell\SiteMonitor\Manifest\SiteMonitorIncidentModelContribution`, `model: Capell\SiteMonitor\Manifest\SiteMonitorRunModelContribution`, `model: Capell\SiteMonitor\Manifest\SiteMonitorTargetModelContribution`, `scheduled-job: Capell\SiteMonitor\Manifest\SiteMonitorScheduledChecksContribution`.
 - Health checks: `Capell\SiteMonitor\Health\SiteMonitorHealthCheck`.
 - Blade views: `packages/site-monitor/resources/views/filament/pages/site-monitor-dashboard.blade.php`.
 - Cache tags: `site-monitor`.
@@ -68,7 +68,7 @@ Screenshot contract: `docs/screenshots.json`.
 - Settings: no package settings declared.
 - Queues or schedules: review package jobs or schedules before install.
 - Cache tags: `site-monitor`.
-- Commands: `capell:site-monitor:doctor`.
+- Commands: `capell:site-monitor:doctor`, `capell:site-monitor:run`.
 
 ## Common Pitfalls
 

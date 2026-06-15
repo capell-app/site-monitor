@@ -63,7 +63,7 @@ final class ResolveSiteMonitorTargetsAction
                 continue;
             }
 
-            $sourceKey = sha1(implode('|', [
+            $sourceKey = hash('sha256', implode('|', [
                 $canonicalUrl,
                 $this->stringValue(data_get($entry, 'siteKey', '')),
                 $this->stringValue(data_get($entry, 'languageKey', '')),
