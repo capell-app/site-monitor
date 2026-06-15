@@ -10,6 +10,9 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Lorisleiva\Actions\Concerns\AsAction;
 
+/**
+ * @method static int run(?int $retentionDays = null)
+ */
 final class PruneSiteMonitorRunsAction
 {
     use AsAction;
@@ -56,11 +59,11 @@ final class PruneSiteMonitorRunsAction
             ->filter(static fn (mixed $id): bool => is_numeric($id))
             ->map(static fn (mixed $id): int => (int) $id);
 
-        return $latestRunIds
+        return array_values($latestRunIds
             ->merge($incidentRunIds)
             ->unique()
             ->values()
-            ->all();
+            ->all());
     }
 
     private function integerConfig(string $key, int $default): int

@@ -81,11 +81,11 @@ final class GuardSiteMonitorOutboundUrlAction
         $records = @dns_get_record($host, DNS_A | DNS_AAAA);
         $addresses = [];
 
-        foreach ($records as $record) {
-            if (! is_array($record)) {
-                continue;
-            }
+        if ($records === false) {
+            $records = [];
+        }
 
+        foreach ($records as $record) {
             $address = $record['ip'] ?? $record['ipv6'] ?? null;
 
             if (is_string($address) && filter_var($address, FILTER_VALIDATE_IP) !== false) {
