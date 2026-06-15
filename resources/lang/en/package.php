@@ -81,6 +81,7 @@ return [
         'run' => [
             'description' => 'Run due Site Monitor checks.',
             'completed' => '{0} No due monitor checks found.|{1} Processed one due monitor check.|[2,*] Processed :count due monitor checks.',
+            'pruned' => '{1} Pruned one old monitor run.|[2,*] Pruned :count old monitor runs.',
         ],
         'doctor' => [
             'description' => 'Run Site Monitor diagnostics without executing monitor checks.',

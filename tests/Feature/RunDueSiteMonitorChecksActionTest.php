@@ -50,7 +50,7 @@ function createDueSiteMonitorTarget(array $overrides = []): SiteMonitorTarget
 {
     return SiteMonitorTarget::query()->create([
         'name' => 'Example',
-        'url' => 'https://example.com',
+        'url' => 'https://93.184.216.34',
         'check_type' => SiteMonitorCheckType::HttpStatus,
         'interval_minutes' => 5,
         'timeout_ms' => 5000,

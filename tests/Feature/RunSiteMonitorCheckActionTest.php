@@ -9,9 +9,11 @@ use Capell\SiteMonitor\Data\SiteMonitorCheckResultData;
 use Capell\SiteMonitor\Enums\SiteMonitorCheckType;
 use Capell\SiteMonitor\Enums\SiteMonitorState;
 use Capell\SiteMonitor\Models\SiteMonitorTarget;
+use Capell\SiteMonitor\Support\LaravelSiteMonitorHttpClient;
 use Capell\SiteMonitor\Tests\Fixtures\FakeSiteMonitorDomainExpiryClient;
 use Capell\SiteMonitor\Tests\Fixtures\FakeSiteMonitorHttpClient;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Http;
 
 it('passes HTTP status checks in the configured status range', function (): void {
     app()->instance(SiteMonitorHttpClient::class, new FakeSiteMonitorHttpClient(new SiteMonitorCheckResultData(
@@ -55,6 +57,52 @@ it('warns when domain expiry is inside the warning window', function (): void {
         ->and($result->errorType)->toBe('expires_soon');
 });
 
+it('blocks unsafe HTTP monitor targets before invoking the HTTP client', function (): void {
+    app()->instance(SiteMonitorHttpClient::class, new FakeSiteMonitorHttpClient(new SiteMonitorCheckResultData(
+        state: SiteMonitorState::Passing,
+        statusCode: 200,
+        responseMs: 20,
+        expiresAt: null,
+        errorType: null,
+        errorMessage: null,
+    )));
+
+    $result = (new RunSiteMonitorCheckAction)->handle(siteMonitorTarget(
+        checkType: SiteMonitorCheckType::HttpStatus,
+        overrides: ['url' => 'http://127.0.0.1/admin'],
+    ));
+
+    expect($result->state)->toBe(SiteMonitorState::Failing)
+        ->and($result->errorType)->toBe('unsafe_target_address');
+});
+
+it('blocks unsafe SSL and domain monitor targets before opening outbound sockets or RDAP clients', function (SiteMonitorCheckType $checkType): void {
+    app()->instance(SiteMonitorDomainExpiryClient::class, new FakeSiteMonitorDomainExpiryClient(CarbonImmutable::now()->addYear()));
+
+    $result = (new RunSiteMonitorCheckAction)->handle(siteMonitorTarget(
+        checkType: $checkType,
+        overrides: ['url' => 'http://localhost/internal'],
+    ));
+
+    expect($result->state)->toBe(SiteMonitorState::Failing)
+        ->and($result->errorType)->toBe('unsafe_target_host');
+})->with([
+    'ssl' => [SiteMonitorCheckType::SslCertificate],
+    'domain' => [SiteMonitorCheckType::DomainExpiry],
+]);
+
+it('revalidates redirects before following them', function (): void {
+    Http::preventStrayRequests();
+    Http::fake([
+        'https://93.184.216.34*' => Http::response('', 302, ['Location' => 'http://10.0.0.5/private']),
+    ]);
+
+    $result = (new LaravelSiteMonitorHttpClient)->check(siteMonitorTarget(checkType: SiteMonitorCheckType::HttpStatus));
+
+    expect($result->state)->toBe(SiteMonitorState::Failing)
+        ->and($result->errorType)->toBe('unsafe_target_address');
+});
+
 /**
  * @param  array<string, mixed>  $overrides
  */
@@ -62,7 +110,7 @@ function siteMonitorTarget(SiteMonitorCheckType $checkType, array $overrides = [
 {
     return SiteMonitorTarget::query()->create([
         'name' => 'Example',
-        'url' => 'https://example.com',
+        'url' => 'https://93.184.216.34',
         'check_type' => $checkType,
         'interval_minutes' => 5,
         'timeout_ms' => 5000,
