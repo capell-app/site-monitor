@@ -76,6 +76,23 @@
             "class": "Capell\\SiteMonitor\\Manifest\\SiteMonitorScheduledChecksContribution",
             "command": "capell:site-monitor:run",
             "frequency": "everyMinute"
+        },
+        {
+            "type": "console-command",
+            "class": "Capell\\SiteMonitor\\Manifest\\SiteMonitorConsoleCommandsContribution",
+            "commands": [
+                "capell:site-monitor:run",
+                "capell:site-monitor:doctor"
+            ],
+            "commandClasses": [
+                "Capell\\SiteMonitor\\Console\\Commands\\RunSiteMonitorCommand",
+                "Capell\\SiteMonitor\\Console\\Commands\\SiteMonitorDoctorCommand"
+            ]
+        },
+        {
+            "type": "health-check",
+            "class": "Capell\\SiteMonitor\\Manifest\\SiteMonitorHealthContribution",
+            "checkClass": "Capell\\SiteMonitor\\Health\\SiteMonitorHealthCheck"
         }
     ],
     "database": {
@@ -91,6 +108,7 @@
         "install": null,
         "setup": null,
         "demo": null,
+        "run": "capell:site-monitor:run",
         "doctor": "capell:site-monitor:doctor"
     },
     "actions": {
@@ -235,6 +253,6 @@
         "categories": ["operations", "monitoring", "admin"]
     },
     "contributionTraceability": {
-        "deferredContributions": ["queue-job"]
+        "deferredContributions": []
     }
 }

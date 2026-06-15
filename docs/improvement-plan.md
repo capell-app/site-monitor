@@ -20,6 +20,8 @@ Site Monitor is a premium operations package for external uptime, SSL certificat
 
 6. **Add query-budget coverage for the dashboard aggregation.** `BuildSiteMonitorDashboardAction` issues several aggregate queries and loads the last 100 response times. This is reasonable, but the manifest declares an admin query budget of 20 without a focused guard. Add a test to pin query count and keep future dashboard cards from turning the operations page into an unbounded query surface. - **S**
 
+7. **Shipped 2026-06-15: package operations metadata is complete.** `capell.json` now declares the run command, console-command/health-check/queue-job contributions, the queued target job, and no deferred contribution types. The provider also registers Site Monitor models through the facade-visible core registry, and README/overview now match the verified Available package behavior. `capell.json`, `src/Manifest/*Contribution.php`, `src/Providers/SiteMonitorServiceProvider.php`, `tests/Unit/ManifestRequirementsTest.php`, `README.md`, `docs/overview.md`. - **S**
+
 ## 3. Missing Features (gaps)
 
 Capabilities declared: site monitoring, uptime, SSL expiry, domain expiry, incident tracking, scheduled checks, and operations admin.
@@ -60,18 +62,19 @@ Site Monitor belongs in `Capell Operations` as the operations counterpart to Dia
 
 ## 6. Prioritized Roadmap
 
-| Item                                                                                  | Bucket | Effort | Impact | Section ref |
-| ------------------------------------------------------------------------------------- | ------ | ------ | ------ | ----------- |
-| Add SSRF/private-network protection for HTTP, redirect, SSL, and domain-check targets | Done   | M      | High   | §2.1, §4.1  |
-| Refresh README/overview from Pipeline to verified Available behavior                  | Done   | S      | Medium | §2.2, §4.2  |
-| Add run-retention pruning using `run_retention_days` while preserving evidence        | Done   | M      | Medium | §2.4, §4.3  |
-| Document scheduler/queue operations and surface stale-target health clearly           | Done   | S      | Medium | §2.5        |
-| Capture and promote real runner-backed admin screenshots                              | Next   | S      | High   | §2.3, §5    |
-| Add dashboard query-budget coverage                                                   | Next   | S      | Medium | §2.6        |
-| Add Email Studio or event-based incident notifications                                | Next   | M      | High   | §3, §4.4    |
-| Add acknowledgement, assignee, and notes workflow for incidents                       | Later  | M      | Medium | §3          |
-| Add status page or digest export                                                      | Later  | L      | Medium | §3          |
-| Expand RDAP endpoint support and document unsupported TLD behavior                    | Later  | S      | Low    | §3          |
+| Item                                                                                                                                                           | Bucket | Effort | Impact | Section ref |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------ | ----------- |
+| Add SSRF/private-network protection for HTTP, redirect, SSL, and domain-check targets                                                                          | Done   | M      | High   | §2.1, §4.1  |
+| Refresh README/overview from Pipeline to verified Available behavior                                                                                           | Done   | S      | Medium | §2.2, §4.2  |
+| Add run-retention pruning using `run_retention_days` while preserving evidence                                                                                 | Done   | M      | Medium | §2.4, §4.3  |
+| Document scheduler/queue operations and surface stale-target health clearly                                                                                    | Done   | S      | Medium | §2.5        |
+| Capture and promote real runner-backed admin screenshots                                                                                                       | Next   | S      | High   | §2.3, §5    |
+| Add dashboard query-budget coverage                                                                                                                            | Next   | S      | Medium | §2.6        |
+| Shipped 2026-06-15: Complete operational manifest metadata and docs for commands, health, queue job, model registry visibility, and Available install behavior | Done   | S      | Medium | §2.7        |
+| Add Email Studio or event-based incident notifications                                                                                                         | Next   | M      | High   | §3, §4.4    |
+| Add acknowledgement, assignee, and notes workflow for incidents                                                                                                | Later  | M      | Medium | §3          |
+| Add status page or digest export                                                                                                                               | Later  | L      | Medium | §3          |
+| Expand RDAP endpoint support and document unsupported TLD behavior                                                                                             | Later  | S      | Low    | §3          |
 
 ## 7. Verification
 
@@ -97,4 +100,4 @@ Result: 21 tests, 60 assertions passed.
 - [x] Approved implementation slices shipped.
 - [x] Focused Site Monitor verification passed.
 - [x] Package tests passed.
-- [ ] Repo preflight passed for changed files.
+- [x] Repo preflight passed for changed files.
