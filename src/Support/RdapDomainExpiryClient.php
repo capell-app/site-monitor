@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Capell\SiteMonitor\Support;
 
 use Capell\SiteMonitor\Actions\GuardSiteMonitorOutboundUrlAction;
+use Capell\SiteMonitor\Actions\ResolveRdapEndpointAction;
 use Capell\SiteMonitor\Contracts\SiteMonitorDomainExpiryClient;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Http;
@@ -15,19 +16,16 @@ final class RdapDomainExpiryClient implements SiteMonitorDomainExpiryClient
     public function expiresAt(string $domain): ?CarbonImmutable
     {
         $domain = strtolower(trim($domain));
-        $topLevelDomain = $this->topLevelDomain($domain);
 
-        if ($domain === '' || $topLevelDomain === null) {
+        if ($domain === '') {
             return null;
         }
 
-        $template = config("capell-site-monitor.rdap_endpoints.{$topLevelDomain}");
+        $url = ResolveRdapEndpointAction::run($domain);
 
-        if (! is_string($template) || $template === '') {
+        if (! is_string($url)) {
             return null;
         }
-
-        $url = str_replace('{domain}', rawurlencode($domain), $template);
 
         try {
             GuardSiteMonitorOutboundUrlAction::run($url);
@@ -65,14 +63,6 @@ final class RdapDomainExpiryClient implements SiteMonitorDomainExpiryClient
         }
 
         return null;
-    }
-
-    private function topLevelDomain(string $domain): ?string
-    {
-        $parts = explode('.', $domain);
-        $lastPart = end($parts);
-
-        return is_string($lastPart) && $lastPart !== '' ? $lastPart : null;
     }
 
     private function integerConfig(string $key, int $default): int

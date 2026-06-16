@@ -29,7 +29,7 @@ Capabilities declared: site monitoring, uptime, SSL expiry, domain expiry, incid
 - **No notification channel yet.** Incidents are recorded, but there is no Email Studio, Slack/webhook, or admin notification bridge for new incidents/resolutions. This is table-stakes for monitoring.
 - **No acknowledgement/ownership workflow.** Incidents can be open/resolved, but there is no operator acknowledgement, assignee, notes timeline, or escalation state.
 - **No status page or digest output.** The package is admin-only. A customer-facing or internal status summary, even if optional, would turn monitoring data into operational communication.
-- **Domain monitoring is TLD-limited.** RDAP endpoints are configured for `.com`, `.net`, and `.org`. Other TLDs silently return unavailable unless operators add config.
+- **Shipped 2026-06-16: Domain monitoring handles common RDAP suffixes and unsupported suffixes explicitly.** The resolver now supports longest-suffix matches such as `co.uk`, the default config includes common `.uk`, `.io`, `.co`, `.app`, `.dev`, and `.page` endpoints, and checks return `domain_expiry_tld_unsupported` when no RDAP endpoint is configured for a target suffix.
 - **No per-target retry/backoff beyond failure thresholds.** The scheduler checks due targets; there is no jitter, retry-after handling, per-host concurrency limit, or cooldown after repeated failures.
 
 ## 4. Issues / Risks
@@ -74,7 +74,7 @@ Site Monitor belongs in `Capell Operations` as the operations counterpart to Dia
 | Add Email Studio or event-based incident notifications                                                                                                         | Next   | M      | High   | §3, §4.4    |
 | Add acknowledgement, assignee, and notes workflow for incidents                                                                                                | Later  | M      | Medium | §3          |
 | Add status page or digest export                                                                                                                               | Later  | L      | Medium | §3          |
-| Expand RDAP endpoint support and document unsupported TLD behavior                                                                                             | Later  | S      | Low    | §3          |
+| Expand RDAP endpoint support and document unsupported TLD behavior                                                                                             | Done   | S      | Low    | §3          |
 
 ## 7. Verification
 

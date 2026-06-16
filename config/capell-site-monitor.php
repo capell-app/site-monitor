@@ -18,8 +18,15 @@ return [
     'site_discovery_auto_targets_enabled' => false,
     'rdap_timeout_ms' => 5000,
     'rdap_endpoints' => [
+        'co.uk' => 'https://rdap.nominet.uk/uk/domain/{domain}',
         'com' => 'https://rdap.verisign.com/com/v1/domain/{domain}',
         'net' => 'https://rdap.verisign.com/net/v1/domain/{domain}',
         'org' => 'https://rdap.publicinterestregistry.org/rdap/org/domain/{domain}',
+        'uk' => 'https://rdap.nominet.uk/uk/domain/{domain}',
+        'io' => 'https://rdap.nic.io/domain/{domain}',
+        'co' => 'https://rdap.nic.co/domain/{domain}',
+        'app' => 'https://pubapi.registry.google/rdap/domain/{domain}',
+        'dev' => 'https://pubapi.registry.google/rdap/domain/{domain}',
+        'page' => 'https://pubapi.registry.google/rdap/domain/{domain}',
     ],
 ];

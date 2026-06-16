@@ -133,6 +133,7 @@
         "uptime-monitoring",
         "ssl-expiry-monitoring",
         "domain-expiry-monitoring",
+        "expanded-rdap-domain-expiry",
         "incident-tracking",
         "scheduled-checks",
         "operations-admin"

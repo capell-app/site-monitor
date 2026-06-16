@@ -10,6 +10,7 @@ use Capell\SiteMonitor\Enums\SiteMonitorCheckType;
 use Capell\SiteMonitor\Enums\SiteMonitorState;
 use Capell\SiteMonitor\Models\SiteMonitorTarget;
 use Capell\SiteMonitor\Support\LaravelSiteMonitorHttpClient;
+use Capell\SiteMonitor\Support\RdapDomainExpiryClient;
 use Capell\SiteMonitor\Tests\Fixtures\FakeSiteMonitorDomainExpiryClient;
 use Capell\SiteMonitor\Tests\Fixtures\FakeSiteMonitorHttpClient;
 use Carbon\CarbonImmutable;
@@ -51,10 +52,52 @@ it('fails HTTP status checks outside the expected status range', function (): vo
 it('warns when domain expiry is inside the warning window', function (): void {
     app()->instance(SiteMonitorDomainExpiryClient::class, new FakeSiteMonitorDomainExpiryClient(CarbonImmutable::now()->addDays(10)));
 
-    $result = (new RunSiteMonitorCheckAction)->handle(siteMonitorTarget(checkType: SiteMonitorCheckType::DomainExpiry));
+    $result = (new RunSiteMonitorCheckAction)->handle(siteMonitorTarget(
+        checkType: SiteMonitorCheckType::DomainExpiry,
+        overrides: ['url' => 'https://example.com'],
+    ));
 
     expect($result->state)->toBe(SiteMonitorState::Warning)
         ->and($result->errorType)->toBe('expires_soon');
+});
+
+it('reports unsupported domain expiry suffixes before invoking RDAP clients', function (): void {
+    config()->set('capell-site-monitor.rdap_endpoints', [
+        'net' => 'https://rdap.verisign.com/net/v1/domain/{domain}',
+    ]);
+
+    app()->instance(SiteMonitorDomainExpiryClient::class, new FakeSiteMonitorDomainExpiryClient(CarbonImmutable::now()->addYear()));
+
+    $result = (new RunSiteMonitorCheckAction)->handle(siteMonitorTarget(
+        checkType: SiteMonitorCheckType::DomainExpiry,
+        overrides: ['url' => 'https://example.com'],
+    ));
+
+    expect($result->state)->toBe(SiteMonitorState::Failing)
+        ->and($result->errorType)->toBe('domain_expiry_tld_unsupported');
+});
+
+it('resolves multi-label RDAP suffixes before generic top-level suffixes', function (): void {
+    Http::preventStrayRequests();
+    Http::fake([
+        'https://93.184.216.34/co-uk/example.co.uk' => Http::response([
+            'events' => [
+                [
+                    'eventAction' => 'expiration',
+                    'eventDate' => '2027-04-20T12:00:00Z',
+                ],
+            ],
+        ]),
+    ]);
+
+    config()->set('capell-site-monitor.rdap_endpoints', [
+        'uk' => 'https://93.184.216.34/uk/{domain}',
+        'co.uk' => 'https://93.184.216.34/co-uk/{domain}',
+    ]);
+
+    $expiresAt = (new RdapDomainExpiryClient)->expiresAt('example.co.uk');
+
+    expect($expiresAt?->toIso8601String())->toBe('2027-04-20T12:00:00+00:00');
 });
 
 it('blocks unsafe HTTP monitor targets before invoking the HTTP client', function (): void {
