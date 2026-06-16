@@ -134,6 +134,7 @@
         "ssl-expiry-monitoring",
         "domain-expiry-monitoring",
         "expanded-rdap-domain-expiry",
+        "dashboard-query-budget",
         "incident-tracking",
         "scheduled-checks",
         "operations-admin"
