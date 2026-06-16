@@ -14,7 +14,7 @@
             "target": "extension-card",
             "required": true,
             "path": "docs/assets/marketplace/extension-card.svg",
-            "screenshotPath": "packages/site-monitor/docs/assets/marketplace/extension-card.svg",
+            "screenshotPath": "packages/site-monitor/docs/screenshots/extension-card.svg",
             "notes": "Committed Marketplace card preview for Site Monitor.",
             "useCase": "An operator reviews the extension card before enabling site monitoring."
         },
@@ -23,26 +23,32 @@
             "title": "Site Monitor dashboard.",
             "package": "site-monitor",
             "surface": "admin",
-            "targetType": "marketplace-asset",
-            "target": "dashboard",
-            "required": true,
+            "targetType": "admin-surface",
+            "target": "SiteMonitorDashboardPage",
+            "required": false,
             "path": "docs/assets/marketplace/dashboard.svg",
-            "screenshotPath": "packages/site-monitor/docs/assets/marketplace/dashboard.svg",
-            "notes": "Committed admin dashboard preview until real captures are available.",
-            "useCase": "An operator reviews target state, open incidents, and latest check evidence."
+            "screenshotPath": "packages/site-monitor/docs/screenshots/site-monitor-dashboard.png",
+            "notes": "Capture the real admin dashboard with seeded target state, open incidents, and latest check evidence.",
+            "useCase": "An operator reviews target state, open incidents, and latest check evidence.",
+            "scenario": "admin-index",
+            "url": "/admin/site-monitor",
+            "waitFor": ".fi-page, main"
         },
         {
             "id": "site-monitor-incident",
             "title": "Site Monitor incident detail.",
             "package": "site-monitor",
             "surface": "admin",
-            "targetType": "marketplace-asset",
-            "target": "incident",
-            "required": true,
+            "targetType": "admin-surface",
+            "target": "SiteMonitorIncidentResource",
+            "required": false,
             "path": "docs/assets/marketplace/incident.svg",
-            "screenshotPath": "packages/site-monitor/docs/assets/marketplace/incident.svg",
-            "notes": "Committed incident preview until real captures are available.",
-            "useCase": "An operator inspects failure evidence and resolution state."
+            "screenshotPath": "packages/site-monitor/docs/screenshots/site-monitor-incident.png",
+            "notes": "Capture the real incident admin surface with failure evidence and resolution state.",
+            "useCase": "An operator inspects failure evidence and resolution state.",
+            "scenario": "admin-index",
+            "url": "/admin/site-monitor-incidents",
+            "waitFor": ".fi-ta, table"
         }
     ]
 }
