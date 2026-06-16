@@ -136,6 +136,7 @@
         "expanded-rdap-domain-expiry",
         "dashboard-query-budget",
         "incident-tracking",
+        "incident-notification-events",
         "scheduled-checks",
         "operations-admin"
     ],

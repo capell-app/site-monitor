@@ -6,6 +6,8 @@ namespace Capell\SiteMonitor\Actions;
 
 use Capell\SiteMonitor\Enums\SiteMonitorIncidentStatus;
 use Capell\SiteMonitor\Enums\SiteMonitorState;
+use Capell\SiteMonitor\Events\SiteMonitorIncidentOpened;
+use Capell\SiteMonitor\Events\SiteMonitorIncidentResolved;
 use Capell\SiteMonitor\Models\SiteMonitorIncident;
 use Capell\SiteMonitor\Models\SiteMonitorRun;
 use Capell\SiteMonitor\Models\SiteMonitorTarget;
@@ -50,7 +52,7 @@ final class ReconcileSiteMonitorIncidentAction
             return $incident;
         }
 
-        return SiteMonitorIncident::query()->create([
+        $incident = SiteMonitorIncident::query()->create([
             'target_id' => $target->getKey(),
             'latest_run_id' => $run->getKey(),
             'status' => SiteMonitorIncidentStatus::Open,
@@ -64,6 +66,10 @@ final class ReconcileSiteMonitorIncidentAction
                 'last_status_code' => $run->status_code,
             ],
         ]);
+
+        SiteMonitorIncidentOpened::dispatch($incident, $target, $run);
+
+        return $incident;
     }
 
     private function resolveOpenIncident(SiteMonitorTarget $target, SiteMonitorRun $run): void
@@ -79,5 +85,7 @@ final class ReconcileSiteMonitorIncidentAction
             'status' => SiteMonitorIncidentStatus::Resolved,
             'resolved_at' => CarbonImmutable::now(),
         ])->save();
+
+        SiteMonitorIncidentResolved::dispatch($incident, $target, $run);
     }
 }

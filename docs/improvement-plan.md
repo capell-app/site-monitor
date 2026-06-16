@@ -26,7 +26,7 @@ Site Monitor is a premium operations package for external uptime, SSL certificat
 
 Capabilities declared: site monitoring, uptime, SSL expiry, domain expiry, incident tracking, scheduled checks, and operations admin.
 
-- **No notification channel yet.** Incidents are recorded, but there is no Email Studio, Slack/webhook, or admin notification bridge for new incidents/resolutions. This is table-stakes for monitoring.
+- **Shipped 2026-06-16: incident notification events.** New and resolved incidents dispatch `SiteMonitorIncidentOpened` and `SiteMonitorIncidentResolved` events with the incident, target, and run for Email Studio or host-app listeners.
 - **No acknowledgement/ownership workflow.** Incidents can be open/resolved, but there is no operator acknowledgement, assignee, notes timeline, or escalation state.
 - **No status page or digest output.** The package is admin-only. A customer-facing or internal status summary, even if optional, would turn monitoring data into operational communication.
 - **Shipped 2026-06-16: Domain monitoring handles common RDAP suffixes and unsupported suffixes explicitly.** The resolver now supports longest-suffix matches such as `co.uk`, the default config includes common `.uk`, `.io`, `.co`, `.app`, `.dev`, and `.page` endpoints, and checks return `domain_expiry_tld_unsupported` when no RDAP endpoint is configured for a target suffix.
@@ -40,7 +40,7 @@ Capabilities declared: site monitoring, uptime, SSL expiry, domain expiry, incid
 
 3. **Important gap: retention config is unused.** Run tables can grow indefinitely for active sites. Recommended fix: prune old runs on command schedule while preserving latest run and incident-linked evidence. - **P2**
 
-4. **Important gap: no alert delivery makes incident tracking passive.** Operators must open the dashboard to know a target is down. Recommended fix: add a notification seam, starting with Email Studio/support event dispatch if installed. - **P2**
+4. **Resolved: incident tracking now has an event notification seam.** New and resolved incidents dispatch package-owned events that Email Studio or host applications can consume without coupling Site Monitor to a mail package. Evidence: `SiteMonitorIncidentOpened`, `SiteMonitorIncidentResolved`, `ReconcileSiteMonitorIncidentActionTest`. - **P2**
 
 5. **Improvement: marketplace media does not prove the real admin UI.** SVG previews are acceptable placeholders, not certification evidence. Recommended fix: capture real runner screenshots. - **P3**
 
@@ -71,7 +71,7 @@ Site Monitor belongs in `Capell Operations` as the operations counterpart to Dia
 | Capture and promote real runner-backed admin screenshots                                                                                                       | Next   | S      | High   | §2.3, §5    |
 | Add dashboard query-budget coverage                                                                                                                            | Done   | S      | Medium | §2.6        |
 | Shipped 2026-06-15: Complete operational manifest metadata and docs for commands, health, queue job, model registry visibility, and Available install behavior | Done   | S      | Medium | §2.7        |
-| Add Email Studio or event-based incident notifications                                                                                                         | Next   | M      | High   | §3, §4.4    |
+| Add Email Studio or event-based incident notifications                                                                                                         | Done   | M      | High   | §3, §4.4    |
 | Add acknowledgement, assignee, and notes workflow for incidents                                                                                                | Later  | M      | Medium | §3          |
 | Add status page or digest export                                                                                                                               | Later  | L      | Medium | §3          |
 | Expand RDAP endpoint support and document unsupported TLD behavior                                                                                             | Done   | S      | Low    | §3          |

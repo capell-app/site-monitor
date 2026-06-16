@@ -8,7 +8,7 @@ Site Monitor is an **Available**, **Schema-owning** Capell package in the **Cape
 
 External uptime, SSL certificate, domain expiry, and incident monitoring for Capell sites.
 
-The package ships scheduled external checks, incident tracking, run retention, outbound target safety, and configurable RDAP domain-expiry lookups. Marketplace screenshot certification is still pending runner-backed captures.
+The package ships scheduled external checks, incident tracking, incident open/resolved events, run retention, outbound target safety, and configurable RDAP domain-expiry lookups. Marketplace screenshot certification is still pending runner-backed captures.
 
 Status details:
 
@@ -42,6 +42,7 @@ Screenshot contract: `docs/screenshots.json`.
 - Filament classes: `SiteMonitorDashboardPage`, `EditSiteMonitorIncident`, `ListSiteMonitorIncidents`, `SiteMonitorIncidentResource`, `CreateSiteMonitorTarget`, `EditSiteMonitorTarget`, `ListSiteMonitorTargets`, `SiteMonitorTargetResource`.
 - Actions: `BuildSiteMonitorDashboardAction`, `GuardSiteMonitorOutboundUrlAction`, `PruneSiteMonitorRunsAction`, `ReconcileSiteMonitorIncidentAction`, `RecordSiteMonitorRunAction`, `ResolveRdapEndpointAction`, `ResolveSiteMonitorTargetsAction`, `RunDueSiteMonitorChecksAction`, `RunSiteMonitorCheckAction`.
 - Data objects: `SiteMonitorCheckResultData`, `SiteMonitorDashboardData`, `SiteMonitorIncidentData`, `SiteMonitorTargetData`.
+- Events: `SiteMonitorIncidentOpened`, `SiteMonitorIncidentResolved`.
 - Jobs: `RunSiteMonitorTargetJob`.
 - Command signatures: `capell:site-monitor:doctor`, `capell:site-monitor:run`.
 - Console command classes: `RunSiteMonitorCommand`, `SiteMonitorDoctorCommand`.
@@ -67,6 +68,7 @@ Screenshot contract: `docs/screenshots.json`.
 - Database changes: package migrations are declared.
 - Settings: no package settings declared.
 - Queues or schedules: schedules `capell:site-monitor:run` every minute when installed and dispatches `RunSiteMonitorTargetJob` for due targets by default.
+- Incident notifications: dispatches `SiteMonitorIncidentOpened` and `SiteMonitorIncidentResolved` events for Email Studio or host-app listeners.
 - Cache tags: `site-monitor`.
 - Commands: `capell:site-monitor:doctor`, `capell:site-monitor:run`.
 
