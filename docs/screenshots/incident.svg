@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" role="img" aria-labelledby="title desc" viewBox="0 0 1200 675">
+  <title id="title">Site Monitor incident preview</title>
+  <desc id="desc">Incident preview with target URL, latest failing run, and resolution state.</desc>
+  <rect width="1200" height="675" fill="#fff7ed"/>
+  <rect x="84" y="78" width="1032" height="519" rx="18" fill="#ffffff" stroke="#fed7aa"/>
+  <text x="132" y="158" fill="#9a3412" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="800">Open Incident</text>
+  <text x="132" y="212" fill="#111827" font-family="Inter, Arial, sans-serif" font-size="44" font-weight="700">Checkout is unavailable</text>
+  <text x="132" y="275" fill="#475569" font-family="Inter, Arial, sans-serif" font-size="25">https://example.test/checkout returned HTTP 503 for 2 consecutive checks.</text>
+  <rect x="132" y="330" width="280" height="124" rx="12" fill="#fee2e2"/>
+  <text x="162" y="382" fill="#991b1b" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Latest status</text>
+  <text x="162" y="425" fill="#991b1b" font-family="Inter, Arial, sans-serif" font-size="38" font-weight="800">503</text>
+  <rect x="460" y="330" width="280" height="124" rx="12" fill="#f1f5f9"/>
+  <text x="490" y="382" fill="#475569" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Response time</text>
+  <text x="490" y="425" fill="#111827" font-family="Inter, Arial, sans-serif" font-size="38" font-weight="800">842ms</text>
+  <rect x="788" y="330" width="280" height="124" rx="12" fill="#f1f5f9"/>
+  <text x="818" y="382" fill="#475569" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Opened</text>
+  <text x="818" y="425" fill="#111827" font-family="Inter, Arial, sans-serif" font-size="38" font-weight="800">9m ago</text>
+  <text x="132" y="526" fill="#334155" font-family="Inter, Arial, sans-serif" font-size="24">Resolution is recorded in the admin. Public pages receive no monitor markup.</text>
+</svg>

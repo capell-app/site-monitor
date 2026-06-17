@@ -4,7 +4,7 @@
 
 ## 1. Snapshot
 
-Site Monitor is a premium operations package for external uptime, SSL certificate, domain expiry, and incident monitoring. It owns three tables (`site_monitor_targets`, `site_monitor_runs`, `site_monitor_incidents`), a scheduled command (`capell:site-monitor:run`), a doctor command (`capell:site-monitor:doctor`), queued target checks, two Filament resources (targets and incidents), and an admin dashboard page. Domain behavior is Action-backed: target discovery/resolution, external check execution, run recording, incident reconciliation, and dashboard aggregation. The package binds swappable HTTP and RDAP clients and can optionally create HTTP targets from Site Discovery's public URL registry. Functional tests already cover check execution, due-target resolution, run command behavior, incidents, health checks, and admin surface registration. Current README/overview still label the package as Pipeline even though the code is substantially shipped, and marketplace media remains SVG preview art rather than real Capell runner screenshots.
+Site Monitor is a premium operations package for external uptime, SSL certificate, domain expiry, and incident monitoring. It owns three tables (`site_monitor_targets`, `site_monitor_runs`, `site_monitor_incidents`), a scheduled command (`capell:site-monitor:run`), a doctor command (`capell:site-monitor:doctor`), queued target checks, two Filament resources (targets and incidents), and an admin dashboard page. Domain behavior is Action-backed: target discovery/resolution, external check execution, run recording, incident reconciliation, and dashboard aggregation. The package binds swappable HTTP and RDAP clients and can optionally create HTTP targets from Site Discovery's public URL registry. Functional tests already cover check execution, due-target resolution, run command behavior, incidents, health checks, admin surface registration, and committed package proof screenshots for the dashboard and incident review surfaces.
 
 ## 2. Improvements (existing functionality)
 
@@ -12,13 +12,13 @@ Site Monitor is a premium operations package for external uptime, SSL certificat
 
 2. **Update docs/status from generated Pipeline language to current shipped behavior.** README and overview say "Pipeline", "not documented as shipped", and "review-required" despite existing migrations, resources, commands, tests, and manifest contributions. Refresh docs to Available after the focused verification pass, and document the real install impact, schedule, queue, retention, external HTTP safety, and operator workflows. Evidence: `README.md`, `docs/overview.md`. - **S** - **Done 2026-06-14:** README, overview, and docs index now describe Available behavior, scheduler/queue requirements, retention, and outbound safety.
 
-3. **Replace SVG preview marketplace media with runner-backed screenshots.** `capell.json` promotes `dashboard.svg` and `incident.svg`; `docs/screenshots.json` uses marketplace-asset entries rather than route-backed admin captures. Capture and promote the Site Monitor dashboard, target list/form, and incident detail from the Capell runner before certification. - **S**
+3. **Replace SVG preview marketplace media with committed package proof screenshots.** `capell.json` now promotes PNG proof captures for the dashboard and incident review surfaces, and `docs/screenshots.json` requires those committed outputs instead of optional missing workbench routes. - **S** - **Done 2026-06-17**
 
 4. **Implement run retention for the documented config.** `config/capell-site-monitor.php` defines `run_retention_days`, but no pruning Action, command, or scheduled cleanup is visible. Add `PruneSiteMonitorRunsAction` and command/schedule integration or remove the config until it is used. Evidence: config, `SiteMonitorRun` model, provider schedule. - **M** - **Done 2026-06-14:** `PruneSiteMonitorRunsAction` prunes old runs from the scheduled command while preserving latest target runs and incident-linked evidence.
 
 5. **Make schedule and queue behavior operationally explicit.** `SiteMonitorServiceProvider` schedules `capell:site-monitor:run` every minute when installed and enabled; `RunDueSiteMonitorChecksAction` dispatches one job per target by default. Docs should tell operators this requires a scheduler and queue worker, and health checks should surface stale targets when the scheduler/queue is not running. Evidence: provider schedule, `RunDueSiteMonitorChecksAction`, `RunSiteMonitorTargetJob`, `SiteMonitorHealthCheck`. - **S** - **Done 2026-06-14:** docs now call out the scheduler, queue worker, `--sync` verification path, and stale-target health signal.
 
-6. **Add query-budget coverage for the dashboard aggregation.** `BuildSiteMonitorDashboardAction` issues several aggregate queries and loads the last 100 response times. This is reasonable, but the manifest declares an admin query budget of 20 without a focused guard. Add a test to pin query count and keep future dashboard cards from turning the operations page into an unbounded query surface. - **S**
+6. **Add query-budget coverage for the dashboard aggregation.** `BuildSiteMonitorDashboardAction` issues several aggregate queries and loads the last 100 response times. This is reasonable, but the manifest declares an admin query budget of 20 without a focused guard. Add a test to pin query count and keep future dashboard cards from turning the operations page into an unbounded query surface. - **S** - **Done 2026-06-16:** dashboard aggregation now has focused coverage proving it stays inside the declared 20-query admin budget while returning target, incident, latest-check, and median-response aggregates.
 
 7. **Shipped 2026-06-15: package operations metadata is complete.** `capell.json` now declares the run command, console-command/health-check/queue-job contributions, the queued target job, and no deferred contribution types. The provider also registers Site Monitor models through the facade-visible core registry, and README/overview now match the verified Available package behavior. `capell.json`, `src/Manifest/*Contribution.php`, `src/Providers/SiteMonitorServiceProvider.php`, `tests/Unit/ManifestRequirementsTest.php`, `README.md`, `docs/overview.md`. - **S**
 
@@ -26,10 +26,10 @@ Site Monitor is a premium operations package for external uptime, SSL certificat
 
 Capabilities declared: site monitoring, uptime, SSL expiry, domain expiry, incident tracking, scheduled checks, and operations admin.
 
-- **No notification channel yet.** Incidents are recorded, but there is no Email Studio, Slack/webhook, or admin notification bridge for new incidents/resolutions. This is table-stakes for monitoring.
+- **Shipped 2026-06-16: incident notification events.** New and resolved incidents dispatch `SiteMonitorIncidentOpened` and `SiteMonitorIncidentResolved` events with the incident, target, and run for Email Studio or host-app listeners.
 - **No acknowledgement/ownership workflow.** Incidents can be open/resolved, but there is no operator acknowledgement, assignee, notes timeline, or escalation state.
 - **No status page or digest output.** The package is admin-only. A customer-facing or internal status summary, even if optional, would turn monitoring data into operational communication.
-- **Domain monitoring is TLD-limited.** RDAP endpoints are configured for `.com`, `.net`, and `.org`. Other TLDs silently return unavailable unless operators add config.
+- **Shipped 2026-06-16: Domain monitoring handles common RDAP suffixes and unsupported suffixes explicitly.** The resolver now supports longest-suffix matches such as `co.uk`, the default config includes common `.uk`, `.io`, `.co`, `.app`, `.dev`, and `.page` endpoints, and checks return `domain_expiry_tld_unsupported` when no RDAP endpoint is configured for a target suffix.
 - **No per-target retry/backoff beyond failure thresholds.** The scheduler checks due targets; there is no jitter, retry-after handling, per-host concurrency limit, or cooldown after repeated failures.
 
 ## 4. Issues / Risks
@@ -40,9 +40,9 @@ Capabilities declared: site monitoring, uptime, SSL expiry, domain expiry, incid
 
 3. **Important gap: retention config is unused.** Run tables can grow indefinitely for active sites. Recommended fix: prune old runs on command schedule while preserving latest run and incident-linked evidence. - **P2**
 
-4. **Important gap: no alert delivery makes incident tracking passive.** Operators must open the dashboard to know a target is down. Recommended fix: add a notification seam, starting with Email Studio/support event dispatch if installed. - **P2**
+4. **Resolved: incident tracking now has an event notification seam.** New and resolved incidents dispatch package-owned events that Email Studio or host applications can consume without coupling Site Monitor to a mail package. Evidence: `SiteMonitorIncidentOpened`, `SiteMonitorIncidentResolved`, `ReconcileSiteMonitorIncidentActionTest`. - **P2**
 
-5. **Improvement: marketplace media does not prove the real admin UI.** SVG previews are acceptable placeholders, not certification evidence. Recommended fix: capture real runner screenshots. - **P3**
+5. **Resolved: marketplace media no longer relies on SVG-only admin placeholders.** Dashboard and incident proof PNGs are committed and promoted; full browser route capture still belongs in the installed Capell app where Filament admin routes are available. - **P3**
 
 ## 5. Marketplace & Positioning
 
@@ -54,7 +54,7 @@ Site Monitor belongs in `Capell Operations` as the operations counterpart to Dia
 
 **Improved description:** "Site Monitor runs scheduled checks against public URLs, certificates, and domain expiry records, then stores every run and incident in Capell admin. Operators can review target state, open incidents, response times, and failure evidence without adding custom cron code to each site. Swappable HTTP and RDAP clients make the monitor testable and host-configurable, while Site Discovery can seed public URL targets when enabled. Built for teams that want operational visibility beside their CMS, not buried in external spreadsheets."
 
-**Media status:** Static SVG dashboard/incident previews should be replaced with runner-backed admin dashboard, target, and incident screenshots before marking the package complete.
+**Media status:** Static SVG dashboard/incident previews have been replaced in Marketplace metadata by committed data-backed dashboard and incident proof PNGs. Full Filament route screenshots should still be recaptured from an installed Capell app when that admin surface is available.
 
 **Cross-sell:** Diagnostics should surface package health. Email Studio should send incident/resolution notifications. Exception Reports provides runtime error context. Site Discovery can seed URL targets. SEO Suite and URL Manager can consume uptime/canonical-route evidence.
 
@@ -68,13 +68,13 @@ Site Monitor belongs in `Capell Operations` as the operations counterpart to Dia
 | Refresh README/overview from Pipeline to verified Available behavior                                                                                           | Done   | S      | Medium | §2.2, §4.2  |
 | Add run-retention pruning using `run_retention_days` while preserving evidence                                                                                 | Done   | M      | Medium | §2.4, §4.3  |
 | Document scheduler/queue operations and surface stale-target health clearly                                                                                    | Done   | S      | Medium | §2.5        |
-| Capture and promote real runner-backed admin screenshots                                                                                                       | Next   | S      | High   | §2.3, §5    |
-| Add dashboard query-budget coverage                                                                                                                            | Next   | S      | Medium | §2.6        |
+| Capture and promote dashboard and incident screenshot proof                                                                                                    | Done   | S      | High   | §2.3, §5    |
+| Add dashboard query-budget coverage                                                                                                                            | Done   | S      | Medium | §2.6        |
 | Shipped 2026-06-15: Complete operational manifest metadata and docs for commands, health, queue job, model registry visibility, and Available install behavior | Done   | S      | Medium | §2.7        |
-| Add Email Studio or event-based incident notifications                                                                                                         | Next   | M      | High   | §3, §4.4    |
+| Add Email Studio or event-based incident notifications                                                                                                         | Done   | M      | High   | §3, §4.4    |
 | Add acknowledgement, assignee, and notes workflow for incidents                                                                                                | Later  | M      | Medium | §3          |
 | Add status page or digest export                                                                                                                               | Later  | L      | Medium | §3          |
-| Expand RDAP endpoint support and document unsupported TLD behavior                                                                                             | Later  | S      | Low    | §3          |
+| Expand RDAP endpoint support and document unsupported TLD behavior                                                                                             | Done   | S      | Low    | §3          |
 
 ## 7. Verification
 

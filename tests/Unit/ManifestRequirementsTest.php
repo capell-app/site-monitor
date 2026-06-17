@@ -8,6 +8,8 @@ use Capell\Core\Contracts\Extensions\RegistersExtensionAdminResource;
 use Capell\Core\Contracts\Extensions\RunsScheduledExtensionJob;
 use Capell\SiteMonitor\Console\Commands\RunSiteMonitorCommand;
 use Capell\SiteMonitor\Console\Commands\SiteMonitorDoctorCommand;
+use Capell\SiteMonitor\Events\SiteMonitorIncidentOpened;
+use Capell\SiteMonitor\Events\SiteMonitorIncidentResolved;
 use Capell\SiteMonitor\Filament\Pages\SiteMonitorDashboardPage;
 use Capell\SiteMonitor\Filament\Resources\SiteMonitorIncidents\SiteMonitorIncidentResource;
 use Capell\SiteMonitor\Filament\Resources\SiteMonitorTargets\SiteMonitorTargetResource;
@@ -36,6 +38,7 @@ it('declares the implemented package surfaces in capell manifest', function (): 
         ->and(data_get($manifest, 'database.migrations'))->toBeTrue()
         ->and(data_get($manifest, 'commands.run'))->toBe('capell:site-monitor:run')
         ->and(data_get($manifest, 'commands.doctor'))->toBe('capell:site-monitor:doctor')
+        ->and(data_get($manifest, 'capabilities', []))->toContain('incident-notification-events')
         ->and(data_get($manifest, 'healthChecks', []))->not->toBeEmpty()
         ->and(data_get($manifest, 'security.publicSurface.routeNames', []))->toBe([])
         ->and(data_get($manifest, 'contributionTraceability.deferredContributions'))->toBe([]);
@@ -106,5 +109,7 @@ it('declares the implemented package surfaces in capell manifest', function (): 
     expect(class_implements(SiteMonitorTargetResourceContribution::class))->toContain(RegistersExtensionAdminResource::class)
         ->and(class_implements(SiteMonitorIncidentResourceContribution::class))->toContain(RegistersExtensionAdminResource::class)
         ->and(class_implements(SiteMonitorScheduledChecksContribution::class))->toContain(RunsScheduledExtensionJob::class)
-        ->and(class_implements(SiteMonitorHealthContribution::class))->toContain(ChecksExtensionHealth::class);
+        ->and(class_implements(SiteMonitorHealthContribution::class))->toContain(ChecksExtensionHealth::class)
+        ->and(class_exists(SiteMonitorIncidentOpened::class))->toBeTrue()
+        ->and(class_exists(SiteMonitorIncidentResolved::class))->toBeTrue();
 });

@@ -106,6 +106,13 @@ final class RunSiteMonitorCheckAction
             return $this->expiryFailure($exception->errorType, $exception->getMessage());
         }
 
+        if (! is_string(ResolveRdapEndpointAction::run($host))) {
+            return $this->expiryFailure(
+                'domain_expiry_tld_unsupported',
+                sprintf('Domain expiry RDAP is not configured for "%s".', $host),
+            );
+        }
+
         $expiresAt = resolve(SiteMonitorDomainExpiryClient::class)->expiresAt($host);
 
         if (! $expiresAt instanceof CarbonImmutable) {
