@@ -243,14 +243,14 @@
                 "caption": "Site Monitor extension preview for Marketplace cards."
             },
             {
-                "path": "docs/assets/marketplace/dashboard.svg",
-                "alt": "Site Monitor dashboard preview",
-                "caption": "Admin dashboard showing target health, open incidents, and latest checks."
+                "path": "docs/screenshots/site-monitor-dashboard.png",
+                "alt": "Site Monitor dashboard proof with target counts, incident counts, latest checks, response times, and target state.",
+                "caption": "Data-backed dashboard proof showing target health, open incidents, and latest checks."
             },
             {
-                "path": "docs/assets/marketplace/incident.svg",
-                "alt": "Site Monitor incident preview",
-                "caption": "Incident detail showing failing target evidence and resolution state."
+                "path": "docs/screenshots/site-monitor-incident.png",
+                "alt": "Site Monitor incident proof showing open incidents, severity, failure count, and latest failure evidence.",
+                "caption": "Data-backed incident proof showing failing target evidence and resolution state."
             }
         ],
         "categories": ["operations", "monitoring", "admin"]
