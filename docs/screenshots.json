@@ -31,11 +31,7 @@
             "notes": "Committed data-backed dashboard proof with seeded target state, open incidents, and latest check evidence.",
             "useCase": "An operator reviews target state, open incidents, and latest check evidence.",
             "scenario": "static-html",
-            "waitFor": ".fi-page, main",
-            "covers": [
-                "packages/site-monitor/src/Filament/Pages/SiteMonitorDashboardPage.php",
-                "packages/site-monitor/src/Filament/Resources/SiteMonitorTargets/SiteMonitorTargetResource.php"
-            ]
+            "waitFor": ".fi-page, main"
         },
         {
             "id": "site-monitor-incident",
