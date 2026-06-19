@@ -33,6 +33,34 @@ Screenshot contract: `screenshots.json`.
 - Site Monitor dashboard (admin, required).
 - Site Monitor incident detail (admin, required).
 
+## Screenshot Evidence
+
+These captures are the package-owned visual contract for the admin pages, public pages, actions, workflows, and feature surfaces described above. Keep this section aligned with `docs/screenshots.json` whenever the package surface changes.
+
+### Site Monitor extension card
+
+![Site Monitor extension card](screenshots/extension-card.svg)
+
+- Surface: marketplace · Target: extension-card.
+- Documents: An operator reviews the extension card before enabling site monitoring.
+- Capture notes: Committed Marketplace card preview for Site Monitor.
+
+### Site Monitor dashboard
+
+![Site Monitor dashboard](screenshots/site-monitor-dashboard.png)
+
+- Surface: admin · Target: site-monitor-dashboard-proof.
+- Documents: An operator reviews target state, open incidents, and latest check evidence.
+- Capture notes: Committed data-backed dashboard proof with seeded target state, open incidents, and latest check evidence.
+
+### Site Monitor incident detail
+
+![Site Monitor incident detail](screenshots/site-monitor-incident.png)
+
+- Surface: admin · Target: site-monitor-incident-proof.
+- Documents: An operator inspects failure evidence and resolution state.
+- Capture notes: Committed data-backed incident proof with failure evidence and resolution state.
+
 ## Technical Shape
 
 - Service providers: `Capell\SiteMonitor\Providers\SiteMonitorServiceProvider`, `Capell\SiteMonitor\Providers\AdminServiceProvider`.
