@@ -4,15 +4,15 @@
 
 ## What This Plugin Adds
 
-Site Monitor is an **Available**, **Schema-owning** Capell package in the **Capell Operations** product group. It is tracked as `capell-app/site-monitor` and ships admin, console, queue, health, and shared runtime surfaces.
+Site Monitor is a **Pipeline**, **Schema-owning** Capell package in the **Capell Operations** product group. It is tracked as `capell-app/site-monitor` and plans these surfaces: admin, console, shared.
 
 External uptime, SSL certificate, domain expiry, and incident monitoring for Capell sites.
 
-The package ships scheduled external checks, incident tracking, incident open/resolved events, run retention, outbound target safety, and configurable RDAP domain-expiry lookups. Marketplace screenshot certification is still pending runner-backed captures.
+This package is not documented as shipped. Treat screens, workflows, providers, and install behaviour as review-required until certification review and host install verification are complete.
 
 Status details:
 
-- Status: Available
+- Status: Pipeline
 - Tier: premium
 - Bundle: operations
 - Composer package: `capell-app/site-monitor`
@@ -21,7 +21,7 @@ Status details:
 
 ## Why It Matters
 
-**For developers:** The package gives developers package-owned service providers, Actions, Data objects, models, Filament classes, jobs, health checks, and swappable HTTP/RDAP clients instead of pushing this behaviour into core or application code.
+**For developers:** The package gives developers package-owned service providers, Actions, Data objects, models, Filament classes, and Blade views instead of pushing this behaviour into core or application code.
 
 **For teams:** External uptime, SSL, domain, and incident monitoring for Capell sites.
 
@@ -33,34 +33,6 @@ Screenshot contract: `screenshots.json`.
 - Site Monitor dashboard (admin, required).
 - Site Monitor incident detail (admin, required).
 
-## Screenshot Evidence
-
-These captures are the package-owned visual contract for the admin pages, public pages, actions, workflows, and feature surfaces described above. Keep this section aligned with `docs/screenshots.json` whenever the package surface changes.
-
-### Site Monitor extension card
-
-![Site Monitor extension card](screenshots/extension-card.svg)
-
-- Surface: marketplace · Target: extension-card.
-- Documents: An operator reviews the extension card before enabling site monitoring.
-- Capture notes: Committed Marketplace card preview for Site Monitor.
-
-### Site Monitor dashboard
-
-![Site Monitor dashboard](screenshots/site-monitor-dashboard.png)
-
-- Surface: admin · Target: site-monitor-dashboard-proof.
-- Documents: An operator reviews target state, open incidents, and latest check evidence.
-- Capture notes: Committed data-backed dashboard proof with seeded target state, open incidents, and latest check evidence.
-
-### Site Monitor incident detail
-
-![Site Monitor incident detail](screenshots/site-monitor-incident.png)
-
-- Surface: admin · Target: site-monitor-incident-proof.
-- Documents: An operator inspects failure evidence and resolution state.
-- Capture notes: Committed data-backed incident proof with failure evidence and resolution state.
-
 ## Technical Shape
 
 - Service providers: `Capell\SiteMonitor\Providers\SiteMonitorServiceProvider`, `Capell\SiteMonitor\Providers\AdminServiceProvider`.
@@ -68,9 +40,9 @@ These captures are the package-owned visual contract for the admin pages, public
 - Migrations: `packages/site-monitor/database/migrations/2026_06_13_000001_create_site_monitor_targets_table.php`, `packages/site-monitor/database/migrations/2026_06_13_000002_create_site_monitor_runs_table.php`, `packages/site-monitor/database/migrations/2026_06_13_000003_create_site_monitor_incidents_table.php`.
 - Models: `SiteMonitorIncident`, `SiteMonitorRun`, `SiteMonitorTarget`.
 - Filament classes: `SiteMonitorDashboardPage`, `EditSiteMonitorIncident`, `ListSiteMonitorIncidents`, `SiteMonitorIncidentResource`, `CreateSiteMonitorTarget`, `EditSiteMonitorTarget`, `ListSiteMonitorTargets`, `SiteMonitorTargetResource`.
+- Events: `SiteMonitorIncidentOpened`, `SiteMonitorIncidentResolved`.
 - Actions: `BuildSiteMonitorDashboardAction`, `GuardSiteMonitorOutboundUrlAction`, `PruneSiteMonitorRunsAction`, `ReconcileSiteMonitorIncidentAction`, `RecordSiteMonitorRunAction`, `ResolveRdapEndpointAction`, `ResolveSiteMonitorTargetsAction`, `RunDueSiteMonitorChecksAction`, `RunSiteMonitorCheckAction`.
 - Data objects: `SiteMonitorCheckResultData`, `SiteMonitorDashboardData`, `SiteMonitorIncidentData`, `SiteMonitorTargetData`.
-- Events: `SiteMonitorIncidentOpened`, `SiteMonitorIncidentResolved`.
 - Jobs: `RunSiteMonitorTargetJob`.
 - Command signatures: `capell:site-monitor:doctor`, `capell:site-monitor:run`.
 - Console command classes: `RunSiteMonitorCommand`, `SiteMonitorDoctorCommand`.
@@ -85,24 +57,23 @@ These captures are the package-owned visual contract for the admin pages, public
 - Models: `SiteMonitorIncident`, `SiteMonitorRun`, `SiteMonitorTarget`.
 - Migration files: `2026_06_13_000001_create_site_monitor_targets_table.php`, `2026_06_13_000002_create_site_monitor_runs_table.php`, `2026_06_13_000003_create_site_monitor_incidents_table.php`.
 - Migration impact: review required; migration files exist and must be verified through the host install flow.
-- Deletion/retention behaviour: scheduled checks prune old runs with `run_retention_days` while preserving each target's latest run and incident-linked evidence.
+- Deletion/retention behaviour: Docs gap unless the package has an explicit pruning command, retention setting, or tested cascade path.
 
 ## Install Impact
 
-- Availability: Available; requires the scheduler and queue worker for normal operation.
+- Availability: Pipeline; review required before installing in a host Capell app.
 - Admin navigation: adds package-owned Filament classes when registered.
 - Permissions: `View:SiteMonitorTarget`, `Create:SiteMonitorTarget`, `Update:SiteMonitorTarget`, `Delete:SiteMonitorTarget`, `View:SiteMonitorIncident`, `Update:SiteMonitorIncident`.
 - Public routes: none detected in package route files.
 - Database changes: package migrations are declared.
 - Settings: no package settings declared.
-- Queues or schedules: schedules `capell:site-monitor:run` every minute when installed and dispatches `RunSiteMonitorTargetJob` for due targets by default.
-- Incident notifications: dispatches `SiteMonitorIncidentOpened` and `SiteMonitorIncidentResolved` events for Email Studio or host-app listeners.
+- Queues or schedules: review package jobs or schedules before install.
 - Cache tags: `site-monitor`.
 - Commands: `capell:site-monitor:doctor`, `capell:site-monitor:run`.
 
 ## Common Pitfalls
 
-- Do not run checks against private, loopback, link-local, or reserved targets unless explicitly enabling private targets in a non-production environment.
+- Do not describe review-required providers, routes, migrations, commands, or admin resources as shipped install behaviour.
 - Keep class references out of `capell.json` until those classes exist and focused tests pass.
 - Keep screenshot and workflow notes labelled as review-required until real package screens are captured or verified.
 
@@ -110,14 +81,14 @@ These captures are the package-owned visual contract for the admin pages, public
 
 | Symptom | Likely cause | Check | Fix |
 | --- | --- | --- | --- |
-| Domain expiry is unavailable | The domain suffix has no configured RDAP endpoint or the registry response has no expiration event | Check `capell-site-monitor.rdap_endpoints` and the run error type | Add a suffix-specific endpoint template such as `co.uk => https://rdap.nominet.uk/uk/domain/{domain}` |
-| Checks stay stale | Scheduler or queue worker is not running | Run `capell:site-monitor:doctor` and inspect the stale-target health check | Start the scheduler and queue worker, or run `capell:site-monitor:run --sync` for verification |
+| Package tests fail before assertions | Manifest or provider metadata references classes that do not exist yet | Check `capell.json`, package `composer.json`, and provider imports | Remove planned class references or add the classes and focused tests before marking the package Available |
+| Docs describe installable behaviour | Pipeline docs drifted into shipped-language claims | Check `status`, `Install Impact`, and `Quick Start` | Keep the package labelled Pipeline until the install flow is verified |
 
 ## Quick Start
 
-1. Install the package migrations and confirm the package is enabled in the host Capell app.
-2. Run the scheduler and a queue worker, then use `capell:site-monitor:run --sync` for a direct verification pass.
-3. Configure `capell-site-monitor.rdap_endpoints` for any additional domain suffixes your operators monitor.
+1. Review `capell.json`, package docs, and any scaffolded source before treating the package as installable.
+2. Complete certification review, host install verification, migrations, and admin surface checks.
+3. Run the docs checks, focused package tests, and install verification before changing the status from Pipeline to Available.
 
 ## Next Steps
 
@@ -128,6 +99,6 @@ These captures are the package-owned visual contract for the admin pages, public
 - [Capell documentation design system](../../../docs/DESIGN_SYSTEM.md)
 - [Capell and package ERD notes](../../../docs/erd/capell-and-package-erds.md)
 - Related packages: [Diagnostics](../../diagnostics/README.md), [Email Studio](../../email-studio/README.md), [Exception Reports](../../exception-reports/README.md), [Seo Suite](../../seo-suite/README.md), [Site Discovery](../../site-discovery/README.md), [Url Manager](../../url-manager/README.md).
-- Docs gap: replace SVG marketplace previews with runner-backed admin screenshots before certification.
+- Docs gap: finish certification review and host install verification before marking this package Available.
 
 <!-- prettier-ignore-end -->
