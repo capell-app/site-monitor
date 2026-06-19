@@ -167,14 +167,14 @@
         },
         "externalHttpClients": {
             "requiresTimeouts": true,
-            "requiresSecretRedaction": false,
+            "requiresSecretRedaction": true,
             "clients": [
                 "Capell\\SiteMonitor\\Support\\LaravelSiteMonitorHttpClient",
                 "Capell\\SiteMonitor\\Support\\RdapDomainExpiryClient"
             ]
         },
         "adminSurface": {
-            "authorization": "package-installed",
+            "authorization": "permissions",
             "permissions": [
                 "View:SiteMonitorTarget",
                 "Create:SiteMonitorTarget",
