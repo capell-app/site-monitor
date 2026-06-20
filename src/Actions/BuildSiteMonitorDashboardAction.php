@@ -13,6 +13,9 @@ use Capell\SiteMonitor\Models\SiteMonitorTarget;
 use Carbon\CarbonImmutable;
 use Lorisleiva\Actions\Concerns\AsAction;
 
+/**
+ * @method static SiteMonitorDashboardData run()
+ */
 final class BuildSiteMonitorDashboardAction
 {
     use AsAction;
