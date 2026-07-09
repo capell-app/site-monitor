@@ -8,6 +8,7 @@ use Capell\SiteMonitor\Contracts\SiteMonitorHttpClient;
 use Capell\SiteMonitor\Data\SiteMonitorCheckResultData;
 use Capell\SiteMonitor\Enums\SiteMonitorCheckType;
 use Capell\SiteMonitor\Enums\SiteMonitorState;
+use Capell\SiteMonitor\Exceptions\UnsafeSiteMonitorTargetException;
 use Capell\SiteMonitor\Models\SiteMonitorTarget;
 use Capell\SiteMonitor\Support\LaravelSiteMonitorHttpClient;
 use Capell\SiteMonitor\Support\RdapDomainExpiryClient;
@@ -146,6 +147,20 @@ it('revalidates redirects before following them', function (): void {
         ->and($result->errorType)->toBe('unsafe_target_address');
 });
 
+it('rejects private addresses resolved for HTTP cURL pinning', function (): void {
+    $client = new LaravelSiteMonitorHttpClient;
+
+    expect(fn (): mixed => invokeSiteMonitorResolvedAddress($client, '10.0.0.5'))
+        ->toThrow(UnsafeSiteMonitorTargetException::class);
+});
+
+it('rejects private addresses resolved for RDAP cURL pinning', function (): void {
+    $client = new RdapDomainExpiryClient;
+
+    expect(fn (): mixed => invokeSiteMonitorResolvedAddress($client, '10.0.0.5'))
+        ->toThrow(UnsafeSiteMonitorTargetException::class);
+});
+
 /**
  * @param  array<string, mixed>  $overrides
  */
@@ -164,4 +179,9 @@ function siteMonitorTarget(SiteMonitorCheckType $checkType, array $overrides = [
         'current_state' => SiteMonitorState::Unknown,
         ...$overrides,
     ]);
+}
+
+function invokeSiteMonitorResolvedAddress(object $client, string $host): mixed
+{
+    return (new ReflectionMethod($client, 'resolvedAddress'))->invoke($client, $host);
 }
