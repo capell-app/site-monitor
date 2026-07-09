@@ -113,7 +113,7 @@ final class GuardSiteMonitorOutboundUrlAction
             return null;
         }
 
-        $host = strtolower(trim($host, " \t\n\r\0\x0B."));
+        $host = strtolower(trim($host, " \t\n\r\0\x0B.[]"));
 
         return $host === '' ? null : $host;
     }

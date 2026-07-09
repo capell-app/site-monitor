@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Capell\SiteMonitor\Actions;
 
-use Capell\SiteDiscovery\Actions\BuildPublicUrlRegistryAction;
 use Capell\SiteMonitor\Enums\SiteMonitorCheckType;
 use Capell\SiteMonitor\Enums\SiteMonitorState;
 use Capell\SiteMonitor\Models\SiteMonitorTarget;
@@ -16,6 +15,8 @@ use Lorisleiva\Actions\Concerns\AsAction;
 final class ResolveSiteMonitorTargetsAction
 {
     use AsAction;
+
+    private const string SITE_DISCOVERY_REGISTRY_ACTION = 'Capell\\SiteDiscovery\\Actions\\BuildPublicUrlRegistryAction';
 
     /**
      * @return Collection<int, SiteMonitorTarget>
@@ -45,11 +46,13 @@ final class ResolveSiteMonitorTargetsAction
             return;
         }
 
-        if (! class_exists(BuildPublicUrlRegistryAction::class)) {
+        if (! class_exists(self::SITE_DISCOVERY_REGISTRY_ACTION)) {
             return;
         }
 
-        $entries = BuildPublicUrlRegistryAction::run();
+        /** @var class-string $actionClass */
+        $actionClass = self::SITE_DISCOVERY_REGISTRY_ACTION;
+        $entries = $actionClass::run();
 
         foreach ($entries as $entry) {
             if (! is_object($entry)) {
