@@ -10,6 +10,11 @@ use Capell\Core\Facades\CapellCore;
 use Capell\SiteMonitor\Filament\Pages\SiteMonitorDashboardPage;
 use Capell\SiteMonitor\Filament\Resources\SiteMonitorIncidents\SiteMonitorIncidentResource;
 use Capell\SiteMonitor\Filament\Resources\SiteMonitorTargets\SiteMonitorTargetResource;
+use Capell\SiteMonitor\Models\SiteMonitorIncident;
+use Capell\SiteMonitor\Models\SiteMonitorTarget;
+use Capell\SiteMonitor\Policies\SiteMonitorIncidentPolicy;
+use Capell\SiteMonitor\Policies\SiteMonitorTargetPolicy;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Override;
 
@@ -23,6 +28,7 @@ final class AdminServiceProvider extends ServiceProvider
         }
 
         $this->registerAdminSurface();
+        $this->registerPolicies();
     }
 
     public function boot(): void
@@ -32,6 +38,7 @@ final class AdminServiceProvider extends ServiceProvider
         }
 
         $this->registerAdminSurface();
+        $this->registerPolicies();
     }
 
     private function isPackageInstalled(): bool
@@ -54,5 +61,11 @@ final class AdminServiceProvider extends ServiceProvider
             class: SiteMonitorIncidentResource::class,
             group: 'SiteMonitorIncident',
         ));
+    }
+
+    private function registerPolicies(): void
+    {
+        Gate::policy(SiteMonitorIncident::class, SiteMonitorIncidentPolicy::class);
+        Gate::policy(SiteMonitorTarget::class, SiteMonitorTargetPolicy::class);
     }
 }
