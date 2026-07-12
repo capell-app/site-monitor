@@ -4,8 +4,8 @@
     "slug": "site-monitor",
     "displayName": "Site Monitor",
     "kind": "package",
-    "capellApiVersion": "^4.0",
-    "version": "1.x-dev",
+    "capellApiVersion": "^0.0",
+    "version": "0.0.x-dev",
     "description": "External uptime, SSL certificate, domain expiry, and incident monitoring for Capell sites.",
     "product": {
         "group": "Capell Operations",

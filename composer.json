@@ -20,14 +20,14 @@
             ]
         },
         "branch-alias": {
-            "dev-main": "1.x-dev"
+            "dev-main": "0.0.x-dev"
         }
     },
     "require": {
         "php": "^8.4",
-        "capell-app/admin": "^1.0 || 1.x-dev",
-        "capell-app/core": "^1.0 || 1.x-dev",
-        "capell-app/frontend": "^1.0 || 1.x-dev",
+        "capell-app/admin": "^0.0 || 0.0.x-dev",
+        "capell-app/core": "^0.0 || 0.0.x-dev",
+        "capell-app/frontend": "^0.0 || 0.0.x-dev",
         "filament/filament": "^5.7@beta",
         "filament/support": "^5.7@beta",
         "laravel/framework": "^11.44.2|^12.0|^13.0",
