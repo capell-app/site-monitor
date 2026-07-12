@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Capell\SiteMonitor\Filament\Pages;
 
 use BackedEnum;
+use Capell\Admin\Support\SiteScope;
 use Capell\Core\Facades\CapellCore;
 use Capell\SiteMonitor\Actions\BuildSiteMonitorDashboardAction;
 use Capell\SiteMonitor\Actions\RunDueSiteMonitorChecksAction;
@@ -14,6 +15,7 @@ use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Override;
 
 final class SiteMonitorDashboardPage extends Page
@@ -45,7 +47,15 @@ final class SiteMonitorDashboardPage extends Page
     #[Override]
     public static function shouldRegisterNavigation(): bool
     {
-        return CapellCore::isPackageInstalled(SiteMonitorServiceProvider::$packageName);
+        return CapellCore::isPackageInstalled(SiteMonitorServiceProvider::$packageName)
+            && self::canAccess();
+    }
+
+    public static function canAccess(): bool
+    {
+        $actor = auth()->user();
+
+        return $actor instanceof Authenticatable && SiteScope::isGlobalActor($actor);
     }
 
     #[Override]

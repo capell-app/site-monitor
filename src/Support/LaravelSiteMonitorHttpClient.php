@@ -117,7 +117,10 @@ final class LaravelSiteMonitorHttpClient implements SiteMonitorHttpClient
 
     private function redactUrl(string $value): string
     {
-        return preg_replace('/([?&][^=]+)=([^&\s]+)/', '$1=[redacted]', $value) ?? $value;
+        $redacted = preg_replace('/(https?:\/\/)[^\s\/@]+:[^\s\/@]+@/i', '$1[redacted]@', $value) ?? $value;
+        $redacted = preg_replace('/([?&][^=]+)=([^&\s]+)/', '$1=[redacted]', $redacted) ?? $redacted;
+
+        return preg_replace('/\b(Bearer|Basic)\s+[A-Za-z0-9._~+\/=:-]+/i', '$1 [redacted]', $redacted) ?? $redacted;
     }
 
     private function isRedirectStatus(int $statusCode): bool

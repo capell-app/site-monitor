@@ -26,11 +26,26 @@ beforeEach(function (): void {
 });
 
 it('exposes the Site Monitor admin page and resources when installed', function (): void {
+    $globalActor = new class extends User
+    {
+        public function isGlobalAdmin(): bool
+        {
+            return true;
+        }
+    };
+    $this->actingAs($globalActor);
+
     expect(SiteMonitorDashboardPage::shouldRegisterNavigation())->toBeTrue()
         ->and(SiteMonitorTargetResource::shouldRegisterNavigation())->toBeTrue()
         ->and(SiteMonitorIncidentResource::shouldRegisterNavigation())->toBeTrue()
         ->and(SiteMonitorTargetResource::getModel())->toBe(SiteMonitorTarget::class)
         ->and(SiteMonitorIncidentResource::getModel())->toBe(SiteMonitorIncident::class);
+});
+
+it('hides the portfolio-wide dashboard from scoped actors', function (): void {
+    $this->actingAs(siteMonitorPolicyActor([siteMonitorPolicyPermission('view_any', 'SiteMonitorTarget')]));
+
+    expect(SiteMonitorDashboardPage::canAccess())->toBeFalse();
 });
 
 it('denies site monitor resources to ordinary panel users without permissions', function (): void {
