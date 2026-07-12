@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 
-## What This Extension Adds
+## What This Plugin Adds
 
 Site Monitor is a **Pipeline**, **Schema-owning** Capell package in the **Capell Operations** product group. It is tracked as `capell-app/site-monitor` and plans these surfaces: admin, console, shared.
 
@@ -29,9 +29,20 @@ Status details:
 
 Screenshot contract: `docs/screenshots.json`.
 
+![Site Monitor extension card](docs/screenshots/extension-card.svg)
+
+![Site Monitor dashboard](docs/screenshots/site-monitor-dashboard.png)
+
 - Site Monitor extension card (marketplace, required).
 - Site Monitor dashboard (admin, required).
 - Site Monitor incident detail (admin, required).
+- Site Monitor target form (admin, optional).
+- Site Monitor check history (admin, optional).
+- Site Monitor targets index (admin, optional).
+- Site Monitor run check action result (admin, optional).
+- Site Monitor incident resolution form (admin, optional).
+- Site Monitor doctor output (admin, optional).
+- Site Monitor incident notification (notification, optional).
 
 ## Technical Shape
 
@@ -40,6 +51,7 @@ Screenshot contract: `docs/screenshots.json`.
 - Migrations: `packages/site-monitor/database/migrations/2026_06_13_000001_create_site_monitor_targets_table.php`, `packages/site-monitor/database/migrations/2026_06_13_000002_create_site_monitor_runs_table.php`, `packages/site-monitor/database/migrations/2026_06_13_000003_create_site_monitor_incidents_table.php`.
 - Models: `SiteMonitorIncident`, `SiteMonitorRun`, `SiteMonitorTarget`.
 - Filament classes: `SiteMonitorDashboardPage`, `EditSiteMonitorIncident`, `ListSiteMonitorIncidents`, `SiteMonitorIncidentResource`, `CreateSiteMonitorTarget`, `EditSiteMonitorTarget`, `ListSiteMonitorTargets`, `SiteMonitorTargetResource`.
+- Policies: `AbstractSiteMonitorResourcePolicy`, `SiteMonitorIncidentPolicy`, `SiteMonitorTargetPolicy`.
 - Events: `SiteMonitorIncidentOpened`, `SiteMonitorIncidentResolved`.
 - Actions: `BuildSiteMonitorDashboardAction`, `GuardSiteMonitorOutboundUrlAction`, `PruneSiteMonitorRunsAction`, `ReconcileSiteMonitorIncidentAction`, `RecordSiteMonitorRunAction`, `ResolveRdapEndpointAction`, `ResolveSiteMonitorTargetsAction`, `RunDueSiteMonitorChecksAction`, `RunSiteMonitorCheckAction`.
 - Data objects: `SiteMonitorCheckResultData`, `SiteMonitorDashboardData`, `SiteMonitorIncidentData`, `SiteMonitorTargetData`.
