@@ -39,10 +39,7 @@ Screenshot contract: `docs/screenshots.json`.
 - Site Monitor target form (admin, optional).
 - Site Monitor check history (admin, optional).
 - Site Monitor targets index (admin, optional).
-- Site Monitor run check action result (admin, optional).
 - Site Monitor incident resolution form (admin, optional).
-- Site Monitor doctor output (admin, optional).
-- Site Monitor incident notification (notification, optional).
 
 ## Technical Shape
 
