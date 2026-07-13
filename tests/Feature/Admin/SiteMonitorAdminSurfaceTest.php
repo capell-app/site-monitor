@@ -90,6 +90,7 @@ it('registers policies for site monitor Filament resource models', function (): 
 
 /**
  * @param  list<string>  $permissions
+ * @param  SupportCollection<int, int>|null  $assignedSiteIds
  */
 function siteMonitorPolicyActor(array $permissions = [], ?SupportCollection $assignedSiteIds = null): User
 {

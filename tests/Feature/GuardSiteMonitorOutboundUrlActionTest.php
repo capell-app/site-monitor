@@ -11,12 +11,7 @@ it('allows public http and https targets and returns the normalized host', funct
 });
 
 it('rejects unsupported schemes and missing hosts before any outbound check', function (string $url, string $errorType): void {
-    expect(fn (): string => GuardSiteMonitorOutboundUrlAction::run($url))
-        ->toThrow(function (UnsafeSiteMonitorTargetException $exception) use ($errorType): bool {
-            expect($exception->errorType)->toBe($errorType);
-
-            return true;
-        });
+    expect(captureUnsafeSiteMonitorTarget($url)->errorType)->toBe($errorType);
 })->with([
     'javascript scheme' => ['javascript:alert(1)', 'unsupported_target_scheme'],
     'file scheme' => ['file:///etc/passwd', 'unsupported_target_scheme'],
@@ -24,12 +19,7 @@ it('rejects unsupported schemes and missing hosts before any outbound check', fu
 ]);
 
 it('rejects local hostnames without relying on DNS', function (string $url): void {
-    expect(fn (): string => GuardSiteMonitorOutboundUrlAction::run($url))
-        ->toThrow(function (UnsafeSiteMonitorTargetException $exception): bool {
-            expect($exception->errorType)->toBe('unsafe_target_host');
-
-            return true;
-        });
+    expect(captureUnsafeSiteMonitorTarget($url)->errorType)->toBe('unsafe_target_host');
 })->with([
     'localhost' => ['http://localhost/internal'],
     'subdomain localhost' => ['http://admin.localhost/internal'],
@@ -37,12 +27,7 @@ it('rejects local hostnames without relying on DNS', function (string $url): voi
 ]);
 
 it('rejects private and reserved literal IP targets without relying on DNS', function (string $url): void {
-    expect(fn (): string => GuardSiteMonitorOutboundUrlAction::run($url))
-        ->toThrow(function (UnsafeSiteMonitorTargetException $exception): bool {
-            expect($exception->errorType)->toBe('unsafe_target_address');
-
-            return true;
-        });
+    expect(captureUnsafeSiteMonitorTarget($url)->errorType)->toBe('unsafe_target_address');
 })->with([
     'private ipv4' => ['http://10.0.0.5/internal'],
     'loopback ipv4' => ['http://127.0.0.1/internal'],
@@ -59,3 +44,14 @@ it('can allow private targets only outside production when explicitly configured
     expect(GuardSiteMonitorOutboundUrlAction::run('http://10.0.0.5/internal'))
         ->toBe('10.0.0.5');
 });
+
+function captureUnsafeSiteMonitorTarget(string $url): UnsafeSiteMonitorTargetException
+{
+    try {
+        GuardSiteMonitorOutboundUrlAction::run($url);
+    } catch (UnsafeSiteMonitorTargetException $exception) {
+        return $exception;
+    }
+
+    throw new LogicException('Expected the site monitor target to be rejected.');
+}
