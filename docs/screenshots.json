@@ -91,20 +91,6 @@
             "waitFor": "table"
         },
         {
-            "id": "site-monitor-run-check-action",
-            "title": "Site Monitor run check action result.",
-            "package": "site-monitor",
-            "surface": "admin",
-            "targetType": "admin-table-action",
-            "target": "SiteMonitorTargetResource/runCheck",
-            "required": false,
-            "screenshotPath": "packages/site-monitor/docs/screenshots/site-monitor-run-check-action.png",
-            "notes": "Run the target table action against a seeded target and capture the notification/result state after a passing or failing check is recorded.",
-            "useCase": "An operator manually verifies a target after deploying a fix.",
-            "scenario": "admin-action",
-            "waitFor": ".fi-no"
-        },
-        {
             "id": "site-monitor-incident-resolution-form",
             "title": "Site Monitor incident resolution form.",
             "package": "site-monitor",
@@ -117,32 +103,6 @@
             "useCase": "An operator documents why an outage is resolved and keeps the incident audit trail clear.",
             "scenario": "admin-form",
             "waitFor": "form"
-        },
-        {
-            "id": "site-monitor-doctor-output",
-            "title": "Site Monitor doctor output.",
-            "package": "site-monitor",
-            "surface": "admin",
-            "targetType": "command-output",
-            "target": "site-monitor:doctor",
-            "required": false,
-            "screenshotPath": "packages/site-monitor/docs/screenshots/site-monitor-doctor-output.png",
-            "notes": "Capture command or rendered proof output showing storage, command registration, freshness, and open incident health checks.",
-            "useCase": "An operator verifies Site Monitor is installed and scheduled checks are healthy.",
-            "scenario": "command-output"
-        },
-        {
-            "id": "site-monitor-incident-notification",
-            "title": "Site Monitor incident notification.",
-            "package": "site-monitor",
-            "surface": "notification",
-            "targetType": "rendered-notification-proof",
-            "target": "SiteMonitorIncidentOpened",
-            "required": false,
-            "screenshotPath": "packages/site-monitor/docs/screenshots/site-monitor-incident-notification.png",
-            "notes": "Capture a rendered alert notification for opened and resolved incidents with target URL, failing evidence, and timestamps, using safe fixture domains.",
-            "useCase": "An operator receives actionable outage context without opening the admin panel first.",
-            "scenario": "notification-preview"
         }
     ]
 }
