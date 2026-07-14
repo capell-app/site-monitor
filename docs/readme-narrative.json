@@ -1,0 +1,38 @@
+{
+    "whatThisPluginAdds": {
+        "text": "Site Monitor is a Pipeline package for planned external uptime, SSL certificate, domain-expiry, and incident monitoring.",
+        "evidence": [
+            "capell.json",
+            "src/Enums/SiteMonitorCheckType.php",
+            "src/Actions/RunSiteMonitorCheckAction.php"
+        ]
+    },
+    "surfaceOutcome": {
+        "text": "It is not supported as an installed operator surface yet. Its dashboard, resources, commands, schedule, and schema remain review-required until certification and host-install verification are complete.",
+        "evidence": [
+            "capell.json",
+            "src/Manifest/SiteMonitorDashboardPageContribution.php",
+            "src/Manifest/SiteMonitorScheduledChecksContribution.php",
+            "tests/Unit/ManifestRequirementsTest.php"
+        ]
+    },
+    "whyItMatters": {
+        "developers": {
+            "text": "The review scaffold contains typed check Actions, an outbound-URL guard, queued target jobs, models, and manifest contributions for certification work.",
+            "evidence": [
+                "src/Actions/GuardSiteMonitorOutboundUrlAction.php",
+                "src/Actions/RunSiteMonitorCheckAction.php",
+                "src/Jobs/RunSiteMonitorTargetJob.php",
+                "tests/Feature/RunSiteMonitorCheckActionTest.php"
+            ]
+        },
+        "teams": {
+            "text": "Teams should not depend on this package in production yet. Its intended outcome is one place to review external checks and incidents after certification is complete.",
+            "evidence": [
+                "capell.json",
+                "src/Actions/BuildSiteMonitorDashboardAction.php",
+                "tests/Feature/Admin/SiteMonitorAdminSurfaceTest.php"
+            ]
+        }
+    }
+}

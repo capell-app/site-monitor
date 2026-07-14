@@ -6,9 +6,11 @@
 
 Site Monitor is a **Pipeline**, **Schema-owning** Capell package in the **Capell Operations** product group. It is tracked as `capell-app/site-monitor` and plans these surfaces: admin, console, shared.
 
-External uptime, SSL certificate, domain expiry, and incident monitoring for Capell sites.
+Site Monitor is a Pipeline package for planned external uptime, SSL certificate, domain-expiry, and incident monitoring.
 
-This package is not documented as shipped. Treat screens, workflows, providers, and install behaviour as review-required until certification review and host install verification are complete.
+It is not supported as an installed operator surface yet. Its dashboard, resources, commands, schedule, and schema remain review-required until certification and host-install verification are complete.
+
+Evidence: [`capell.json`](capell.json), [`src/Enums/SiteMonitorCheckType.php`](src/Enums/SiteMonitorCheckType.php), [`src/Actions/RunSiteMonitorCheckAction.php`](src/Actions/RunSiteMonitorCheckAction.php), [`src/Manifest/SiteMonitorDashboardPageContribution.php`](src/Manifest/SiteMonitorDashboardPageContribution.php), [`src/Manifest/SiteMonitorScheduledChecksContribution.php`](src/Manifest/SiteMonitorScheduledChecksContribution.php), [`tests/Unit/ManifestRequirementsTest.php`](tests/Unit/ManifestRequirementsTest.php).
 
 Status details:
 
@@ -21,9 +23,11 @@ Status details:
 
 ## Why It Matters
 
-**For developers:** The package gives developers package-owned service providers, Actions, Data objects, models, Filament classes, and Blade views instead of pushing this behaviour into core or application code.
+**For developers:** The review scaffold contains typed check Actions, an outbound-URL guard, queued target jobs, models, and manifest contributions for certification work.
 
-**For teams:** External uptime, SSL, domain, and incident monitoring for Capell sites.
+**For teams:** Teams should not depend on this package in production yet. Its intended outcome is one place to review external checks and incidents after certification is complete.
+
+Evidence: [`src/Actions/GuardSiteMonitorOutboundUrlAction.php`](src/Actions/GuardSiteMonitorOutboundUrlAction.php), [`src/Actions/RunSiteMonitorCheckAction.php`](src/Actions/RunSiteMonitorCheckAction.php), [`src/Jobs/RunSiteMonitorTargetJob.php`](src/Jobs/RunSiteMonitorTargetJob.php), [`tests/Feature/RunSiteMonitorCheckActionTest.php`](tests/Feature/RunSiteMonitorCheckActionTest.php), [`capell.json`](capell.json), [`src/Actions/BuildSiteMonitorDashboardAction.php`](src/Actions/BuildSiteMonitorDashboardAction.php), [`tests/Feature/Admin/SiteMonitorAdminSurfaceTest.php`](tests/Feature/Admin/SiteMonitorAdminSurfaceTest.php).
 
 ## Screens And Workflow
 
@@ -49,11 +53,14 @@ Screenshot contract: `docs/screenshots.json`.
 - Models: `SiteMonitorIncident`, `SiteMonitorRun`, `SiteMonitorTarget`.
 - Filament classes: `SiteMonitorDashboardPage`, `EditSiteMonitorIncident`, `ListSiteMonitorIncidents`, `SiteMonitorIncidentResource`, `CreateSiteMonitorTarget`, `EditSiteMonitorTarget`, `ListSiteMonitorTargets`, `SiteMonitorTargetResource`.
 - Policies: `AbstractSiteMonitorResourcePolicy`, `SiteMonitorIncidentPolicy`, `SiteMonitorTargetPolicy`.
+- Extension contracts: `SiteMonitorDomainExpiryClient`, `SiteMonitorHttpClient`.
 - Events: `SiteMonitorIncidentOpened`, `SiteMonitorIncidentResolved`.
 - Actions: `BuildSiteMonitorDashboardAction`, `GuardSiteMonitorOutboundUrlAction`, `PruneSiteMonitorRunsAction`, `ReconcileSiteMonitorIncidentAction`, `RecordSiteMonitorRunAction`, `ResolveRdapEndpointAction`, `ResolveSiteMonitorTargetsAction`, `RunDueSiteMonitorChecksAction`, `RunSiteMonitorCheckAction`.
 - Data objects: `SiteMonitorCheckResultData`, `SiteMonitorDashboardData`, `SiteMonitorIncidentData`, `SiteMonitorTargetData`.
 - Jobs: `RunSiteMonitorTargetJob`.
 - Command signatures: `capell:site-monitor:doctor`, `capell:site-monitor:run`.
+- Manifest action API: `buildSiteMonitorDashboard: Capell\SiteMonitor\Actions\BuildSiteMonitorDashboardAction`, `reconcileSiteMonitorIncident: Capell\SiteMonitor\Actions\ReconcileSiteMonitorIncidentAction`, `recordSiteMonitorRun: Capell\SiteMonitor\Actions\RecordSiteMonitorRunAction`, `resolveSiteMonitorTargets: Capell\SiteMonitor\Actions\ResolveSiteMonitorTargetsAction`, `runDueSiteMonitorChecks: Capell\SiteMonitor\Actions\RunDueSiteMonitorChecksAction`, `runSiteMonitorCheck: Capell\SiteMonitor\Actions\RunSiteMonitorCheckAction`.
+- Scheduled commands: `capell:site-monitor:run (everyMinute)`.
 - Console command classes: `RunSiteMonitorCommand`, `SiteMonitorDoctorCommand`.
 - Manifest contributions: `admin-page: Capell\SiteMonitor\Manifest\SiteMonitorDashboardPageContribution`, `admin-resource: Capell\SiteMonitor\Manifest\SiteMonitorIncidentResourceContribution`, `admin-resource: Capell\SiteMonitor\Manifest\SiteMonitorTargetResourceContribution`, `console-command: Capell\SiteMonitor\Manifest\SiteMonitorConsoleCommandsContribution`, `health-check: Capell\SiteMonitor\Manifest\SiteMonitorHealthContribution`, `model: Capell\SiteMonitor\Manifest\SiteMonitorIncidentModelContribution`, `model: Capell\SiteMonitor\Manifest\SiteMonitorRunModelContribution`, `model: Capell\SiteMonitor\Manifest\SiteMonitorTargetModelContribution`, `scheduled-job: Capell\SiteMonitor\Manifest\SiteMonitorScheduledChecksContribution`.
 - Health checks: `Capell\SiteMonitor\Health\SiteMonitorHealthCheck`.
@@ -64,19 +71,23 @@ Screenshot contract: `docs/screenshots.json`.
 
 - Required tables: `site_monitor_targets`, `site_monitor_runs`, `site_monitor_incidents`.
 - Models: `SiteMonitorIncident`, `SiteMonitorRun`, `SiteMonitorTarget`.
+- Core record references in migrations: `sites via site_id`, `languages via language_id`.
 - Migration files: `2026_06_13_000001_create_site_monitor_targets_table.php`, `2026_06_13_000002_create_site_monitor_runs_table.php`, `2026_06_13_000003_create_site_monitor_incidents_table.php`.
 - Migration impact: review required; migration files exist and must be verified through the host install flow.
-- Deletion/retention behaviour: Docs gap unless the package has an explicit pruning command, retention setting, or tested cascade path.
+- Deletion/retention behaviour: migrations declare cascade-on-delete relationships and null-on-delete relationships; no timed pruning or retention schedule is declared in `capell.json`.
 
 ## Install Impact
 
 - Availability: Pipeline; review required before installing in a host Capell app.
-- Admin navigation: adds package-owned Filament classes when registered.
+- Required packages: `capell-app/admin`, `capell-app/core`, `capell-app/frontend`.
+- Admin navigation: declares `admin-page: SiteMonitorDashboardPageContribution`, `admin-resource: SiteMonitorIncidentResourceContribution`, `admin-resource: SiteMonitorTargetResourceContribution`; each Filament page or resource controls its own navigation visibility.
+- Admin/editor extensions: none declared.
 - Permissions: `View:SiteMonitorTarget`, `Create:SiteMonitorTarget`, `Update:SiteMonitorTarget`, `Delete:SiteMonitorTarget`, `View:SiteMonitorIncident`, `Update:SiteMonitorIncident`.
-- Public routes: none detected in package route files.
+- Public routes: none declared.
 - Database changes: package migrations are declared.
+- Config: `config/capell-site-monitor.php`.
 - Settings: no package settings declared.
-- Queues or schedules: review package jobs or schedules before install.
+- Queues or schedules: scheduled commands `capell:site-monitor:run (everyMinute)`; queue jobs `RunSiteMonitorTargetJob`.
 - Cache tags: `site-monitor`.
 - Commands: `capell:site-monitor:doctor`, `capell:site-monitor:run`.
 
@@ -103,6 +114,9 @@ Screenshot contract: `docs/screenshots.json`.
 
 - [Package docs](docs/README.md)
 - [Overview](docs/overview.md)
+- [Admin guide](docs/admin-guide.md)
+- Configuration files: [`config/capell-site-monitor.php`](config/capell-site-monitor.php).
+- [Troubleshooting](#troubleshooting)
 - [Screenshot contract](docs/screenshots.json)
 - [Marketplace assets](docs/assets/marketplace/)
 - [Capell content language plan](../../docs/CONTENT_LANGUAGE_PLAN.md)
