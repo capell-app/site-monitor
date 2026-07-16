@@ -27,7 +27,7 @@ it('passes HTTP status checks in the configured status range', function (): void
         errorMessage: null,
     )));
 
-    $result = (new RunSiteMonitorCheckAction)->handle(siteMonitorTarget(checkType: SiteMonitorCheckType::HttpStatus));
+    $result = RunSiteMonitorCheckAction::run(siteMonitorTarget(checkType: SiteMonitorCheckType::HttpStatus));
 
     expect($result->state)->toBe(SiteMonitorState::Passing)
         ->and($result->statusCode)->toBe(204)
@@ -44,7 +44,7 @@ it('fails HTTP status checks outside the expected status range', function (): vo
         errorMessage: null,
     )));
 
-    $result = (new RunSiteMonitorCheckAction)->handle(siteMonitorTarget(checkType: SiteMonitorCheckType::HttpStatus));
+    $result = RunSiteMonitorCheckAction::run(siteMonitorTarget(checkType: SiteMonitorCheckType::HttpStatus));
 
     expect($result->state)->toBe(SiteMonitorState::Failing)
         ->and($result->errorType)->toBe('unexpected_status_code');
@@ -53,7 +53,7 @@ it('fails HTTP status checks outside the expected status range', function (): vo
 it('warns when domain expiry is inside the warning window', function (): void {
     app()->instance(SiteMonitorDomainExpiryClient::class, new FakeSiteMonitorDomainExpiryClient(CarbonImmutable::now()->addDays(10)));
 
-    $result = (new RunSiteMonitorCheckAction)->handle(siteMonitorTarget(
+    $result = RunSiteMonitorCheckAction::run(siteMonitorTarget(
         checkType: SiteMonitorCheckType::DomainExpiry,
         overrides: ['url' => 'https://example.com'],
     ));
@@ -69,7 +69,7 @@ it('reports unsupported domain expiry suffixes before invoking RDAP clients', fu
 
     app()->instance(SiteMonitorDomainExpiryClient::class, new FakeSiteMonitorDomainExpiryClient(CarbonImmutable::now()->addYear()));
 
-    $result = (new RunSiteMonitorCheckAction)->handle(siteMonitorTarget(
+    $result = RunSiteMonitorCheckAction::run(siteMonitorTarget(
         checkType: SiteMonitorCheckType::DomainExpiry,
         overrides: ['url' => 'https://example.com'],
     ));
@@ -111,7 +111,7 @@ it('blocks unsafe HTTP monitor targets before invoking the HTTP client', functio
         errorMessage: null,
     )));
 
-    $result = (new RunSiteMonitorCheckAction)->handle(siteMonitorTarget(
+    $result = RunSiteMonitorCheckAction::run(siteMonitorTarget(
         checkType: SiteMonitorCheckType::HttpStatus,
         overrides: ['url' => 'http://127.0.0.1/admin'],
     ));
@@ -123,7 +123,7 @@ it('blocks unsafe HTTP monitor targets before invoking the HTTP client', functio
 it('blocks unsafe SSL and domain monitor targets before opening outbound sockets or RDAP clients', function (SiteMonitorCheckType $checkType): void {
     app()->instance(SiteMonitorDomainExpiryClient::class, new FakeSiteMonitorDomainExpiryClient(CarbonImmutable::now()->addYear()));
 
-    $result = (new RunSiteMonitorCheckAction)->handle(siteMonitorTarget(
+    $result = RunSiteMonitorCheckAction::run(siteMonitorTarget(
         checkType: $checkType,
         overrides: ['url' => 'http://localhost/internal'],
     ));

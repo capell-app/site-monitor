@@ -5,14 +5,16 @@ declare(strict_types=1);
 namespace Capell\SiteMonitor\Actions;
 
 use Capell\SiteMonitor\Exceptions\UnsafeSiteMonitorTargetException;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Lorisleiva\Actions\Concerns\AsFake;
+use Lorisleiva\Actions\Concerns\AsObject;
 
 /**
  * @method static string run(string $url)
  */
 final class GuardSiteMonitorOutboundUrlAction
 {
-    use AsAction;
+    use AsFake;
+    use AsObject;
 
     public function handle(string $url): string
     {

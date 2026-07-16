@@ -6,6 +6,7 @@ Status: Available. These docs describe implemented package behaviour plus remain
 
 | Document                                | Use                                                                    |
 | --------------------------------------- | ---------------------------------------------------------------------- |
+| [Admin Guide](admin-guide.md)           | Configure monitors and review site health alerts.                      |
 | [Overview](overview.md)                 | Operator value, runtime behavior, setup, safety, and screenshot notes. |
 | [Screenshot manifest](screenshots.json) | Marketplace and docs screenshot capture contract.                      |
 

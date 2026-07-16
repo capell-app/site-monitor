@@ -10,11 +10,13 @@ use Capell\SiteMonitor\Models\SiteMonitorTarget;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Lorisleiva\Actions\Concerns\AsFake;
+use Lorisleiva\Actions\Concerns\AsObject;
 
 final class ResolveSiteMonitorTargetsAction
 {
-    use AsAction;
+    use AsFake;
+    use AsObject;
 
     private const string SITE_DISCOVERY_REGISTRY_ACTION = 'Capell\\SiteDiscovery\\Actions\\BuildPublicUrlRegistryAction';
 

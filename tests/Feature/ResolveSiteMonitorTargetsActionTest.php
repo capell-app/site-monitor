@@ -14,7 +14,7 @@ it('returns enabled targets whose next check is due', function (): void {
     createResolvableSiteMonitorTarget(['next_check_at' => CarbonImmutable::now()->addMinute()]);
     createResolvableSiteMonitorTarget(['enabled' => false, 'next_check_at' => CarbonImmutable::now()->subMinute()]);
 
-    $targets = (new ResolveSiteMonitorTargetsAction)->handle();
+    $targets = ResolveSiteMonitorTargetsAction::run();
 
     expect($targets)->toHaveCount(1)
         ->and($targets->firstOrFail()->is($dueTarget))->toBeTrue();
@@ -24,7 +24,7 @@ it('can limit due targets by site and target id', function (): void {
     $matchingTarget = createResolvableSiteMonitorTarget(['site_id' => 10, 'next_check_at' => null]);
     createResolvableSiteMonitorTarget(['site_id' => 20, 'next_check_at' => null]);
 
-    $targets = (new ResolveSiteMonitorTargetsAction)->handle(siteId: 10, targetId: $matchingTarget->id);
+    $targets = ResolveSiteMonitorTargetsAction::run(siteId: 10, targetId: $matchingTarget->id);
 
     expect($targets)->toHaveCount(1)
         ->and($targets->firstOrFail()->is($matchingTarget))->toBeTrue();

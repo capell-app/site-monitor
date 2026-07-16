@@ -142,9 +142,9 @@ final class SiteMonitorTargetResource extends Resource
             ->label(__('capell-site-monitor::package.actions.run_now'))
             ->icon('heroicon-o-play')
             ->action(function (SiteMonitorTarget $record): void {
-                $result = (new RunSiteMonitorCheckAction)->handle($record);
+                $result = RunSiteMonitorCheckAction::run($record);
 
-                (new RecordSiteMonitorRunAction)->handle($record, $result);
+                RecordSiteMonitorRunAction::run($record, $result);
 
                 Notification::make('capell_site_monitor_target_checked')
                     ->title(__('capell-site-monitor::package.notifications.target_checked', [

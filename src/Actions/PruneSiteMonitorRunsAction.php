@@ -8,14 +8,16 @@ use Capell\SiteMonitor\Models\SiteMonitorIncident;
 use Capell\SiteMonitor\Models\SiteMonitorRun;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Lorisleiva\Actions\Concerns\AsFake;
+use Lorisleiva\Actions\Concerns\AsObject;
 
 /**
  * @method static int run(?int $retentionDays = null)
  */
 final class PruneSiteMonitorRunsAction
 {
-    use AsAction;
+    use AsFake;
+    use AsObject;
 
     public function handle(?int $retentionDays = null): int
     {

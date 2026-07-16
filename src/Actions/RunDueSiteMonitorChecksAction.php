@@ -5,15 +5,17 @@ declare(strict_types=1);
 namespace Capell\SiteMonitor\Actions;
 
 use Capell\SiteMonitor\Jobs\RunSiteMonitorTargetJob;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Lorisleiva\Actions\Concerns\AsFake;
+use Lorisleiva\Actions\Concerns\AsObject;
 
 final class RunDueSiteMonitorChecksAction
 {
-    use AsAction;
+    use AsFake;
+    use AsObject;
 
     public function handle(bool $queue = true, ?int $siteId = null, ?int $targetId = null): int
     {
-        $targets = (new ResolveSiteMonitorTargetsAction)->handle(siteId: $siteId, targetId: $targetId);
+        $targets = ResolveSiteMonitorTargetsAction::run(siteId: $siteId, targetId: $targetId);
 
         foreach ($targets as $target) {
             if ($queue) {
@@ -22,8 +24,8 @@ final class RunDueSiteMonitorChecksAction
                 continue;
             }
 
-            $result = (new RunSiteMonitorCheckAction)->handle($target);
-            (new RecordSiteMonitorRunAction)->handle($target, $result);
+            $result = RunSiteMonitorCheckAction::run($target);
+            RecordSiteMonitorRunAction::run($target, $result);
         }
 
         return $targets->count();

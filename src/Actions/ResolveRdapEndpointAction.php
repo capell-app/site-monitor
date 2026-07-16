@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Capell\SiteMonitor\Actions;
 
-use Lorisleiva\Actions\Concerns\AsAction;
+use Lorisleiva\Actions\Concerns\AsFake;
+use Lorisleiva\Actions\Concerns\AsObject;
 
 final class ResolveRdapEndpointAction
 {
-    use AsAction;
+    use AsFake;
+    use AsObject;
 
     public function handle(string $domain): ?string
     {

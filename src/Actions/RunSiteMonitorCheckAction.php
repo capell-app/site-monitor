@@ -12,13 +12,15 @@ use Capell\SiteMonitor\Enums\SiteMonitorState;
 use Capell\SiteMonitor\Exceptions\UnsafeSiteMonitorTargetException;
 use Capell\SiteMonitor\Models\SiteMonitorTarget;
 use Carbon\CarbonImmutable;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Lorisleiva\Actions\Concerns\AsFake;
+use Lorisleiva\Actions\Concerns\AsObject;
 use OpenSSLCertificate;
 use Throwable;
 
 final class RunSiteMonitorCheckAction
 {
-    use AsAction;
+    use AsFake;
+    use AsObject;
 
     public function handle(SiteMonitorTarget $target): SiteMonitorCheckResultData
     {

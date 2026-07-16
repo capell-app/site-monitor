@@ -72,7 +72,7 @@ final class SiteMonitorDashboardPage extends Page
 
     public function dashboard(): SiteMonitorDashboardData
     {
-        return $this->cachedDashboard ??= (new BuildSiteMonitorDashboardAction)->handle();
+        return $this->cachedDashboard ??= BuildSiteMonitorDashboardAction::run();
     }
 
     /**
@@ -86,7 +86,7 @@ final class SiteMonitorDashboardPage extends Page
                 ->label(__('capell-site-monitor::package.actions.run_due_checks'))
                 ->icon('heroicon-o-play')
                 ->action(function (): void {
-                    $count = (new RunDueSiteMonitorChecksAction)->handle(queue: true);
+                    $count = RunDueSiteMonitorChecksAction::run(queue: true);
 
                     Notification::make('capell_site_monitor_checks_queued')
                         ->title(trans_choice(

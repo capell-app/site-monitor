@@ -2,30 +2,19 @@
 
 <!-- prettier-ignore-start -->
 
-## What it does for you
+## Availability
 
-Site Monitor keeps an eye on your site's health and uptime. It runs checks on a schedule and shows you the results, so you know at a glance whether something needs attention.
+Site Monitor is a Pipeline package and is not supported as an installed operator surface yet. Its dashboard, resources, commands, schedule, and schema remain review-required until certification and host-install verification are complete.
 
-## Your screens
+## Intended outcome
 
-- **Site monitor**: the dashboard of checks and their latest results.
-- **Checks**: each thing being monitored, with when it was last and next checked.
+The package contains foundations for external uptime, SSL certificate, domain-expiry, and incident monitoring. Once certified, its intended outcome is one place to review checks and incidents.
 
-## What you can do
+## What to do now
 
-- See your site's health at a glance.
-- Read the result of each check.
-- See when each check last ran and runs next.
-
-## Where to find it
-
-Go to **Site Monitor** in the admin to see check results.
-
-## Good to know
-
-- See your site's **health** at a glance.
-- A failed check means something needs attention.
-- Checks run on a schedule; the screen shows the **Last checked** and **Next check** times.
+- Keep using your established production monitoring and incident-management tools.
+- Ask a developer to verify package certification, host installation, migrations, schedule, queue processing, and outbound URL safeguards before evaluating the package.
+- Do not rely on any current Site Monitor screens, jobs, or documentation as a production runbook.
 
 ---
 

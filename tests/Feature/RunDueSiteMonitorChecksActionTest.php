@@ -19,7 +19,7 @@ it('queues due monitor targets by default', function (): void {
 
     $target = createDueSiteMonitorTarget();
 
-    $count = (new RunDueSiteMonitorChecksAction)->handle();
+    $count = RunDueSiteMonitorChecksAction::run();
 
     expect($count)->toBe(1);
     Queue::assertPushed(RunSiteMonitorTargetJob::class, fn (RunSiteMonitorTargetJob $job): bool => $job->targetId === $target->id);
@@ -37,7 +37,7 @@ it('can run due monitor targets inline', function (): void {
 
     createDueSiteMonitorTarget();
 
-    $count = (new RunDueSiteMonitorChecksAction)->handle(queue: false);
+    $count = RunDueSiteMonitorChecksAction::run(queue: false);
 
     expect($count)->toBe(1)
         ->and(SiteMonitorRun::query()->count())->toBe(1);

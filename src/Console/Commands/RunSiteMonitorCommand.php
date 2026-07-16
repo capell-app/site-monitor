@@ -26,7 +26,7 @@ final class RunSiteMonitorCommand extends Command
 
     public function handle(): int
     {
-        $count = (new RunDueSiteMonitorChecksAction)->handle(
+        $count = RunDueSiteMonitorChecksAction::run(
             queue: ! (bool) $this->option('sync'),
             siteId: $this->integerOption('site-id'),
             targetId: $this->integerOption('target-id'),

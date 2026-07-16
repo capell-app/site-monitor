@@ -9,11 +9,13 @@ use Capell\SiteMonitor\Enums\SiteMonitorState;
 use Capell\SiteMonitor\Models\SiteMonitorRun;
 use Capell\SiteMonitor\Models\SiteMonitorTarget;
 use Carbon\CarbonImmutable;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Lorisleiva\Actions\Concerns\AsFake;
+use Lorisleiva\Actions\Concerns\AsObject;
 
 final class RecordSiteMonitorRunAction
 {
-    use AsAction;
+    use AsFake;
+    use AsObject;
 
     public function handle(SiteMonitorTarget $target, SiteMonitorCheckResultData $result): SiteMonitorRun
     {

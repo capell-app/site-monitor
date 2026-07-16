@@ -12,11 +12,13 @@ use Capell\SiteMonitor\Models\SiteMonitorIncident;
 use Capell\SiteMonitor\Models\SiteMonitorRun;
 use Capell\SiteMonitor\Models\SiteMonitorTarget;
 use Carbon\CarbonImmutable;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Lorisleiva\Actions\Concerns\AsFake;
+use Lorisleiva\Actions\Concerns\AsObject;
 
 final class ReconcileSiteMonitorIncidentAction
 {
-    use AsAction;
+    use AsFake;
+    use AsObject;
 
     public function handle(SiteMonitorTarget $target, SiteMonitorRun $run): ?SiteMonitorIncident
     {
