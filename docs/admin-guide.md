@@ -21,8 +21,8 @@ Use your existing production monitoring and incident-management tools for uptime
 
 ## Troubleshooting
 
-| What you see | What it means | What to do |
-| --- | --- | --- |
-| The Site Monitor screens are absent | The package is not certified or installed as an operator surface in this host | Do not add routes or targets manually; ask your developer to verify package certification and host installation |
-| A scheduled check or queue job is not running | The package has not yet been verified for production operation in this host | Continue using your existing monitoring service and have a developer complete the certification checks |
-| You need an uptime alert now | Site Monitor is not an approved production alerting solution yet | Configure the alert in your established monitoring service |
+| What you see                                  | What it means                                                                 | What to do                                                                                                      |
+| --------------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| The Site Monitor screens are absent           | The package is not certified or installed as an operator surface in this host | Do not add routes or targets manually; ask your developer to verify package certification and host installation |
+| A scheduled check or queue job is not running | The package has not yet been verified for production operation in this host   | Continue using your existing monitoring service and have a developer complete the certification checks          |
+| You need an uptime alert now                  | Site Monitor is not an approved production alerting solution yet              | Configure the alert in your established monitoring service                                                      |
