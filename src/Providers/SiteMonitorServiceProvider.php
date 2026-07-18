@@ -45,6 +45,8 @@ final class SiteMonitorServiceProvider extends AbstractPackageServiceProvider
 
     public function registeringPackage(): void
     {
+        parent::registeringPackage();
+
         $this->app->register(AdminServiceProvider::class);
 
         $this->app->bind(SiteMonitorHttpClient::class, LaravelSiteMonitorHttpClient::class);
