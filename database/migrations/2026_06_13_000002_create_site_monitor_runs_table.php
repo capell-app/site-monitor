@@ -20,12 +20,12 @@ return new class extends Migration
             $table->string('state')->index();
             $table->unsignedSmallInteger('status_code')->nullable()->index();
             $table->unsignedInteger('response_ms')->nullable();
-            $table->timestamp('expires_at')->nullable()->index();
+            $table->dateTime('expires_at')->nullable()->index();
             $table->string('error_type')->nullable()->index();
             $table->text('error_message')->nullable();
             $table->json('redirect_chain')->nullable();
             $table->json('metadata')->nullable();
-            $table->timestamp('checked_at')->index();
+            $table->dateTime('checked_at')->index();
             $table->timestamps();
         });
     }

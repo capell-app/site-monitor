@@ -75,7 +75,7 @@ return [
     ],
     'notifications' => [
         'checks_queued' => '{0} No due monitor checks were queued.|{1} Queued one due monitor check.|[2,*] Queued :count due monitor checks.',
-        'target_checked' => 'Monitor check completed: :state.',
+        'target_check_queued' => 'Monitor check queued.',
     ],
     'commands' => [
         'run' => [

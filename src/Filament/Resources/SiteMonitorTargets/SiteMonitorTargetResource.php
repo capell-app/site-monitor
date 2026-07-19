@@ -6,8 +6,7 @@ namespace Capell\SiteMonitor\Filament\Resources\SiteMonitorTargets;
 
 use BackedEnum;
 use Capell\Core\Facades\CapellCore;
-use Capell\SiteMonitor\Actions\RecordSiteMonitorRunAction;
-use Capell\SiteMonitor\Actions\RunSiteMonitorCheckAction;
+use Capell\SiteMonitor\Actions\QueueSiteMonitorTargetCheckAction;
 use Capell\SiteMonitor\Enums\SiteMonitorCheckType;
 use Capell\SiteMonitor\Filament\Resources\SiteMonitorTargets\Pages\CreateSiteMonitorTarget;
 use Capell\SiteMonitor\Filament\Resources\SiteMonitorTargets\Pages\EditSiteMonitorTarget;
@@ -142,14 +141,10 @@ final class SiteMonitorTargetResource extends Resource
             ->label(__('capell-site-monitor::package.actions.run_now'))
             ->icon('heroicon-o-play')
             ->action(function (SiteMonitorTarget $record): void {
-                $result = RunSiteMonitorCheckAction::run($record);
+                QueueSiteMonitorTargetCheckAction::run($record);
 
-                RecordSiteMonitorRunAction::run($record, $result);
-
-                Notification::make('capell_site_monitor_target_checked')
-                    ->title(__('capell-site-monitor::package.notifications.target_checked', [
-                        'state' => $result->state->getLabel(),
-                    ]))
+                Notification::make('capell_site_monitor_target_check_queued')
+                    ->title(__('capell-site-monitor::package.notifications.target_check_queued'))
                     ->success()
                     ->send();
             });

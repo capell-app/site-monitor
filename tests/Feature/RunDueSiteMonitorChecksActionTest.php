@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Capell\SiteMonitor\Actions\QueueSiteMonitorTargetCheckAction;
 use Capell\SiteMonitor\Actions\RunDueSiteMonitorChecksAction;
 use Capell\SiteMonitor\Contracts\SiteMonitorHttpClient;
 use Capell\SiteMonitor\Data\SiteMonitorCheckResultData;
@@ -25,6 +26,18 @@ it('queues due monitor targets by default', function (): void {
     Queue::assertPushed(RunSiteMonitorTargetJob::class, fn (RunSiteMonitorTargetJob $job): bool => $job->targetId === $target->id);
 });
 
+it('queues a requested target check instead of running outbound work in the request', function (): void {
+    Queue::fake();
+    $target = createDueSiteMonitorTarget();
+
+    QueueSiteMonitorTargetCheckAction::run($target);
+
+    Queue::assertPushed(
+        RunSiteMonitorTargetJob::class,
+        fn (RunSiteMonitorTargetJob $job): bool => $job->targetId === $target->getKey(),
+    );
+});
+
 it('can run due monitor targets inline', function (): void {
     app()->instance(SiteMonitorHttpClient::class, new FakeSiteMonitorHttpClient(new SiteMonitorCheckResultData(
         state: SiteMonitorState::Passing,
@@ -41,6 +54,20 @@ it('can run due monitor targets inline', function (): void {
 
     expect($count)->toBe(1)
         ->and(SiteMonitorRun::query()->count())->toBe(1);
+});
+
+it('records an explicit failure when a queued check exhausts its retries', function (): void {
+    $target = createDueSiteMonitorTarget();
+    $targetId = $target->getKey();
+    throw_unless(is_int($targetId), RuntimeException::class, 'Site monitor target must have an integer key.');
+
+    (new RunSiteMonitorTargetJob($targetId))->failed(new RuntimeException('unexpected transport failure'));
+
+    $run = SiteMonitorRun::query()->sole();
+
+    expect($run->state)->toBe(SiteMonitorState::Failing)
+        ->and($run->error_type)->toBe('monitor_job_failed')
+        ->and($run->error_message)->toBe('unexpected transport failure');
 });
 
 /**
