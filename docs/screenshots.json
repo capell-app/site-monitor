@@ -7,6 +7,7 @@
     "entries": [
         {
             "id": "site-monitor-extension-card",
+            "colorSchemes": ["light"],
             "title": "Site Monitor extension card.",
             "package": "site-monitor",
             "surface": "marketplace",
@@ -20,6 +21,7 @@
         },
         {
             "id": "site-monitor-dashboard",
+            "colorSchemes": ["light"],
             "title": "Site Monitor dashboard.",
             "package": "site-monitor",
             "surface": "admin",
@@ -35,6 +37,7 @@
         },
         {
             "id": "site-monitor-incident",
+            "colorSchemes": ["light"],
             "title": "Site Monitor incident detail.",
             "package": "site-monitor",
             "surface": "admin",
