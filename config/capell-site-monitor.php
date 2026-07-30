@@ -17,6 +17,13 @@ return [
     'schedule_enabled' => true,
     'site_discovery_auto_targets_enabled' => false,
     'rdap_timeout_ms' => 5000,
+    // Outbound retry policy for RDAP domain expiry lookups, which are idempotent reads.
+    // Deliberately not used by the uptime prober, where a retry would mask an outage.
+    'rdap' => [
+        'retry_times' => 3,
+        'retry_delay_ms' => 500,
+        'retry_after_max_ms' => 60000,
+    ],
     'rdap_endpoints' => [
         'co.uk' => 'https://rdap.nominet.uk/uk/domain/{domain}',
         'com' => 'https://rdap.verisign.com/com/v1/domain/{domain}',

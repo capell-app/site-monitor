@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Capell\SiteMonitor\Support;
 
+use Capell\Core\Support\Http\OutboundHttpRetry;
 use Capell\SiteMonitor\Actions\GuardSiteMonitorOutboundUrlAction;
 use Capell\SiteMonitor\Actions\ResolveRdapEndpointAction;
 use Capell\SiteMonitor\Contracts\SiteMonitorDomainExpiryClient;
@@ -32,9 +33,14 @@ final class RdapDomainExpiryClient implements SiteMonitorDomainExpiryClient
         try {
             $endpoint = $this->endpoint($url);
 
-            $response = Http::timeout(max(1, (int) ceil($this->integerConfig('capell-site-monitor.rdap_timeout_ms', 5000) / 1000)))
-                ->acceptJson()
-                ->withOptions($this->requestOptions($endpoint))
+            // An RDAP domain lookup is an idempotent read of registry data, and its
+            // result does not feed the up/down verdict, so retrying is safe here.
+            $response = OutboundHttpRetry::fromConfig('capell-site-monitor.rdap')
+                ->apply(
+                    Http::timeout(max(1, (int) ceil($this->integerConfig('capell-site-monitor.rdap_timeout_ms', 5000) / 1000)))
+                        ->acceptJson()
+                        ->withOptions($this->requestOptions($endpoint)),
+                )
                 ->get($url);
         } catch (Throwable) {
             return null;

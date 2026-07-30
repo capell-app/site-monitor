@@ -101,6 +101,34 @@ it('resolves multi-label RDAP suffixes before generic top-level suffixes', funct
     expect($expiresAt?->toIso8601String())->toBe('2027-04-20T12:00:00+00:00');
 });
 
+it('retries temporarily unavailable RDAP lookups', function (): void {
+    Http::preventStrayRequests();
+    Http::fake([
+        'https://93.184.216.34/domain/example.com' => Http::sequence()
+            ->push([], 503)
+            ->push([
+                'events' => [
+                    [
+                        'eventAction' => 'expiration',
+                        'eventDate' => '2027-04-20T12:00:00Z',
+                    ],
+                ],
+            ]),
+    ]);
+
+    config()->set('capell-site-monitor.rdap.retry_times', 2);
+    config()->set('capell-site-monitor.rdap.retry_delay_ms', 0);
+    config()->set('capell-site-monitor.rdap_endpoints', [
+        'com' => 'https://93.184.216.34/domain/{domain}',
+    ]);
+
+    $expiresAt = (new RdapDomainExpiryClient)->expiresAt('example.com');
+
+    expect($expiresAt?->toIso8601String())->toBe('2027-04-20T12:00:00+00:00');
+
+    Http::assertSentCount(2);
+});
+
 it('blocks unsafe HTTP monitor targets before invoking the HTTP client', function (): void {
     app()->instance(SiteMonitorHttpClient::class, new FakeSiteMonitorHttpClient(new SiteMonitorCheckResultData(
         state: SiteMonitorState::Passing,
