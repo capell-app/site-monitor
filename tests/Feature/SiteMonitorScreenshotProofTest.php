@@ -2,26 +2,14 @@
 
 declare(strict_types=1);
 
-use Symfony\Component\Process\Process;
-
-it('keeps committed Site Monitor dashboard and incident proof screenshots current', function (): void {
-    $packagePath = dirname(__DIR__, 2);
-    $repositoryPath = dirname(__DIR__, 4);
+it('keeps sanitized Site Monitor preview fixtures available without writing accepted evidence', function (): void {
     $entries = [
         [
-            'htmlPath' => $packagePath . '/docs/screenshots/.site-monitor-dashboard.html',
-            'screenshotPath' => $packagePath . '/docs/screenshots/site-monitor-dashboard.png',
             'html' => siteMonitorDashboardScreenshotHtml(),
-            'width' => 1280,
-            'height' => 900,
             'expected' => 'Site Monitor dashboard',
         ],
         [
-            'htmlPath' => $packagePath . '/docs/screenshots/.site-monitor-incident.html',
-            'screenshotPath' => $packagePath . '/docs/screenshots/site-monitor-incident.png',
             'html' => siteMonitorIncidentScreenshotHtml(),
-            'width' => 1280,
-            'height' => 900,
             'expected' => 'Incident evidence',
         ],
     ];
@@ -32,35 +20,6 @@ it('keeps committed Site Monitor dashboard and incident proof screenshots curren
             ->not->toContain('authoring')
             ->not->toContain('recordKey')
             ->not->toContain('capell-app/site-monitor');
-
-        if (getenv('CAPELL_REFRESH_SITE_MONITOR_SCREENSHOTS') === '1') {
-            file_put_contents($entry['htmlPath'], $entry['html']);
-
-            try {
-                $process = new Process([
-                    'node',
-                    $repositoryPath . '/scripts/capture-static-html-screenshot.mjs',
-                    $entry['htmlPath'],
-                    $entry['screenshotPath'],
-                    (string) $entry['width'],
-                    (string) $entry['height'],
-                ], $repositoryPath);
-                $process->setTimeout(60);
-                $process->mustRun();
-            } finally {
-                if (is_file($entry['htmlPath'])) {
-                    unlink($entry['htmlPath']);
-                }
-            }
-        }
-
-        expect($entry['screenshotPath'])->toBeFile();
-
-        $dimensions = getimagesize($entry['screenshotPath']);
-
-        expect($dimensions)->toBeArray()
-            ->and($dimensions[0] ?? null)->toBe($entry['width'])
-            ->and($dimensions[1] ?? null)->toBeGreaterThanOrEqual($entry['height']);
     }
 });
 

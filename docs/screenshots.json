@@ -27,13 +27,15 @@
             "surface": "admin",
             "targetType": "rendered-admin-proof",
             "target": "site-monitor-dashboard-proof",
-            "required": true,
+            "required": false,
+            "url": "/site-monitor",
             "path": "docs/screenshots/site-monitor-dashboard.png",
             "screenshotPath": "packages/site-monitor/docs/screenshots/site-monitor-dashboard.png",
-            "notes": "Committed data-backed dashboard proof with seeded target state, open incidents, and latest check evidence.",
+            "notes": "Diagnostic-only static preview. It is excluded from documentation, release, Marketplace, and promotional evidence until the package owner supplies a deterministic authenticated dashboard fixture for the shared runner.",
             "useCase": "An operator reviews target state, open incidents, and latest check evidence.",
             "scenario": "static-html",
-            "waitFor": ".fi-page, main"
+            "waitFor": ".fi-page, main",
+            "acceptance": "diagnostic-only"
         },
         {
             "id": "site-monitor-incident",
@@ -43,13 +45,15 @@
             "surface": "admin",
             "targetType": "rendered-admin-proof",
             "target": "site-monitor-incident-proof",
-            "required": true,
+            "required": false,
+            "url": "/site-monitor/incidents/{first-record}/edit",
             "path": "docs/screenshots/site-monitor-incident.png",
             "screenshotPath": "packages/site-monitor/docs/screenshots/site-monitor-incident.png",
-            "notes": "Committed data-backed incident proof with failure evidence and resolution state.",
+            "notes": "Diagnostic-only static preview. It is excluded from documentation, release, Marketplace, and promotional evidence until the package owner supplies a deterministic authenticated incident fixture for the shared runner.",
             "useCase": "An operator inspects failure evidence and resolution state.",
             "scenario": "static-html",
-            "waitFor": ".fi-ta, table"
+            "waitFor": ".fi-ta, table",
+            "acceptance": "diagnostic-only"
         },
         {
             "id": "site-monitor-target-form",
@@ -106,6 +110,28 @@
             "useCase": "An operator documents why an outage is resolved and keeps the incident audit trail clear.",
             "scenario": "admin-form",
             "waitFor": "form"
+        },
+        {
+            "id": "site-monitor-admin-sidebar-menu-open",
+            "colorSchemes": ["light"],
+            "title": "Site Monitor dashboard with admin sidebar menu open.",
+            "package": "site-monitor",
+            "surface": "admin",
+            "targetType": "rendered-admin-proof",
+            "target": "site-monitor-dashboard-proof",
+            "required": false,
+            "path": "docs/screenshots/site-monitor-dashboard.png",
+            "screenshotPath": "packages/site-monitor/docs/screenshots/site-monitor-admin-sidebar-menu-open.png",
+            "notes": "Committed data-backed dashboard proof with seeded target state, open incidents, and latest check evidence. Capture this same admin surface with the fully collapsible sidebar opened.",
+            "useCase": "An operator reviews target state, open incidents, and latest check evidence.",
+            "scenario": "static-html",
+            "waitFor": ".fi-page, main",
+            "beforeWait": [
+                {
+                    "type": "click",
+                    "selector": ".fi-topbar-open-collapse-sidebar-btn"
+                }
+            ]
         }
     ]
 }

@@ -35,11 +35,8 @@ Screenshot contract: `docs/screenshots.json`.
 
 ![Site Monitor extension card](docs/screenshots/extension-card.svg)
 
-![Site Monitor dashboard](docs/screenshots/site-monitor-dashboard.png)
-
 - Site Monitor extension card (marketplace, required).
-- Site Monitor dashboard (admin, required).
-- Site Monitor incident detail (admin, required).
+- Site Monitor dashboard and incident previews remain diagnostic-only until authenticated package fixtures have matching runner receipts.
 - Site Monitor target form (admin, optional).
 - Site Monitor check history (admin, optional).
 - Site Monitor targets index (admin, optional).

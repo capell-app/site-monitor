@@ -18,7 +18,7 @@ final class ResolveSiteMonitorTargetsAction
     use AsFake;
     use AsObject;
 
-    private const string SITE_DISCOVERY_REGISTRY_ACTION = 'Capell\\SiteDiscovery\\Actions\\BuildPublicUrlRegistryAction';
+    private const string PUBLIC_URL_REGISTRY_ACTION = 'Capell\\DiscoveryFoundation\\Actions\\BuildPublicUrlRegistryAction';
 
     /**
      * @return Collection<int, SiteMonitorTarget>
@@ -48,12 +48,12 @@ final class ResolveSiteMonitorTargetsAction
             return;
         }
 
-        if (! class_exists(self::SITE_DISCOVERY_REGISTRY_ACTION)) {
+        if (! class_exists(self::PUBLIC_URL_REGISTRY_ACTION)) {
             return;
         }
 
         /** @var class-string $actionClass */
-        $actionClass = self::SITE_DISCOVERY_REGISTRY_ACTION;
+        $actionClass = self::PUBLIC_URL_REGISTRY_ACTION;
         $entries = $actionClass::run();
 
         foreach ($entries as $entry) {
