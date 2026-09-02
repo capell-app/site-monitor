@@ -6,8 +6,11 @@ namespace Capell\SiteMonitor\Models;
 
 use Capell\SiteMonitor\Enums\SiteMonitorIncidentStatus;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Override;
 
 /**
  * @property int $id
@@ -24,7 +27,24 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 final class SiteMonitorIncident extends Model
 {
-    protected $guarded = [];
+    /** @use HasFactory<Factory<static>> */
+    use HasFactory;
+
+    /**
+     * @var list<string>
+     */
+    protected $fillable = [
+        'target_id',
+        'latest_run_id',
+        'status',
+        'severity',
+        'summary',
+        'failure_count',
+        'opened_at',
+        'resolved_at',
+        'last_failure_at',
+        'metadata',
+    ];
 
     /**
      * @return BelongsTo<SiteMonitorTarget, $this>
@@ -45,6 +65,7 @@ final class SiteMonitorIncident extends Model
     /**
      * @return array<string, string>
      */
+    #[Override]
     protected function casts(): array
     {
         return [

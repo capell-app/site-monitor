@@ -8,9 +8,12 @@ use Capell\SiteMonitor\Enums\SiteMonitorCheckType;
 use Capell\SiteMonitor\Enums\SiteMonitorIncidentStatus;
 use Capell\SiteMonitor\Enums\SiteMonitorState;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Override;
 
 /**
  * @property int $id
@@ -36,7 +39,33 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 final class SiteMonitorTarget extends Model
 {
-    protected $guarded = [];
+    /** @use HasFactory<Factory<static>> */
+    use HasFactory;
+
+    /**
+     * @var list<string>
+     */
+    protected $fillable = [
+        'site_id',
+        'language_id',
+        'source_package',
+        'source_key',
+        'name',
+        'url',
+        'check_type',
+        'route_name',
+        'interval_minutes',
+        'timeout_ms',
+        'failure_threshold',
+        'expected_status_minimum',
+        'expected_status_maximum',
+        'enabled',
+        'current_state',
+        'consecutive_failures',
+        'last_checked_at',
+        'next_check_at',
+        'metadata',
+    ];
 
     /**
      * @return HasMany<SiteMonitorRun, $this>
@@ -74,6 +103,7 @@ final class SiteMonitorTarget extends Model
     /**
      * @return array<string, string>
      */
+    #[Override]
     protected function casts(): array
     {
         return [
