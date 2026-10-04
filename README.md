@@ -10,8 +10,6 @@ Site Monitor is a Pipeline package for planned external uptime, SSL certificate,
 
 It is not supported as an installed operator surface yet. Its dashboard, resources, commands, schedule, and schema remain review-required until certification and host-install verification are complete.
 
-Evidence: [`capell.json`](capell.json), [`src/Enums/SiteMonitorCheckType.php`](src/Enums/SiteMonitorCheckType.php), [`src/Actions/RunSiteMonitorCheckAction.php`](src/Actions/RunSiteMonitorCheckAction.php), [`src/Manifest/SiteMonitorDashboardPageContribution.php`](src/Manifest/SiteMonitorDashboardPageContribution.php), [`src/Manifest/SiteMonitorScheduledChecksContribution.php`](src/Manifest/SiteMonitorScheduledChecksContribution.php), [`tests/Unit/ManifestRequirementsTest.php`](tests/Unit/ManifestRequirementsTest.php).
-
 Status details:
 
 - Status: Pipeline
@@ -27,8 +25,6 @@ Status details:
 
 **For teams:** Teams should not depend on this package in production yet. Its intended outcome is one place to review external checks and incidents after certification is complete.
 
-Evidence: [`src/Actions/GuardSiteMonitorOutboundUrlAction.php`](src/Actions/GuardSiteMonitorOutboundUrlAction.php), [`src/Actions/RunSiteMonitorCheckAction.php`](src/Actions/RunSiteMonitorCheckAction.php), [`src/Jobs/RunSiteMonitorTargetJob.php`](src/Jobs/RunSiteMonitorTargetJob.php), [`tests/Feature/RunSiteMonitorCheckActionTest.php`](tests/Feature/RunSiteMonitorCheckActionTest.php), [`capell.json`](capell.json), [`src/Actions/BuildSiteMonitorDashboardAction.php`](src/Actions/BuildSiteMonitorDashboardAction.php), [`tests/Feature/Admin/SiteMonitorAdminSurfaceTest.php`](tests/Feature/Admin/SiteMonitorAdminSurfaceTest.php).
-
 ## Screens And Workflow
 
 Screenshot contract: `docs/screenshots.json`.
@@ -41,7 +37,6 @@ Screenshot contract: `docs/screenshots.json`.
 - Site Monitor dashboard (admin, supplementary evidence).
 - Site Monitor incident detail (admin, supplementary evidence).
 - Site Monitor target form (admin, supplementary evidence).
-- Site Monitor check history (admin, supplementary evidence).
 - Site Monitor targets index (admin, supplementary evidence).
 - Site Monitor incident resolution form (admin, supplementary evidence).
 - Site Monitor dashboard with admin sidebar menu open (admin, supplementary evidence).
@@ -100,6 +95,7 @@ Screenshot contract: `docs/screenshots.json`.
 
 - `BuildSiteMonitorDashboardAction`
 - `GuardSiteMonitorOutboundUrlAction`
+- `PrepareSiteMonitorScreenshotAction`
 - `PruneSiteMonitorRunsAction`
 - `QueueSiteMonitorTargetCheckAction`
 - `ReconcileSiteMonitorIncidentAction`
@@ -216,6 +212,7 @@ Screenshot contract: `docs/screenshots.json`.
 
 - [Package docs](docs/README.md)
 - [Overview](docs/overview.md)
+- [Worked extension examples](docs/extension-contracts.md)
 - [Admin guide](docs/admin-guide.md)
 - Configuration files: [`config/capell-site-monitor.php`](config/capell-site-monitor.php).
 - [Troubleshooting](#troubleshooting)
@@ -225,6 +222,5 @@ Screenshot contract: `docs/screenshots.json`.
 - [Capell documentation design system](../../docs/DESIGN_SYSTEM.md)
 - [Capell and package ERD notes](../../docs/erd/capell-and-package-erds.md)
 - Related packages: [Discovery Foundation](../discovery-foundation/README.md), [Diagnostics](../diagnostics/README.md), [Email Studio](../email-studio/README.md), [Exception Reports](../exception-reports/README.md), [Seo Suite](../seo-suite/README.md), [Site Discovery](../site-discovery/README.md), [Url Manager](../url-manager/README.md).
-- Docs gap: finish certification review and host install verification before marking this package Available.
 
 <!-- prettier-ignore-end -->
