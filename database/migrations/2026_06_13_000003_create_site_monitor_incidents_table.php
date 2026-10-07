@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('severity')->default('warning')->index();
             $table->string('summary');
             $table->unsignedInteger('failure_count')->default(1);
-            $table->timestamp('opened_at')->index();
+            $table->dateTime('opened_at')->index();
             $table->timestamp('last_failure_at')->nullable()->index();
             $table->timestamp('resolved_at')->nullable()->index();
             $table->json('metadata')->nullable();

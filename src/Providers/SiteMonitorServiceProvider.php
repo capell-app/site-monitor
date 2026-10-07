@@ -25,6 +25,7 @@ final class SiteMonitorServiceProvider extends AbstractPackageServiceProvider
 
     public static string $packageName = 'capell-app/site-monitor';
 
+    #[Override]
     public function configurePackage(Package $package): void
     {
         $package
@@ -40,9 +41,11 @@ final class SiteMonitorServiceProvider extends AbstractPackageServiceProvider
                 '2026_06_13_000001_create_site_monitor_targets_table',
                 '2026_06_13_000002_create_site_monitor_runs_table',
                 '2026_06_13_000003_create_site_monitor_incidents_table',
+                '2026_10_04_000001_remove_implicit_timestamp_updates_from_site_monitor',
             ]);
     }
 
+    #[Override]
     public function registeringPackage(): void
     {
         parent::registeringPackage();
@@ -53,6 +56,7 @@ final class SiteMonitorServiceProvider extends AbstractPackageServiceProvider
         $this->app->bind(SiteMonitorDomainExpiryClient::class, RdapDomainExpiryClient::class);
     }
 
+    #[Override]
     public function packageBooted(): void
     {
         if (! $this->isPackageInstalled()) {

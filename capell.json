@@ -94,6 +94,16 @@
             "type": "health-check",
             "class": "Capell\\SiteMonitor\\Manifest\\SiteMonitorHealthContribution",
             "checkClass": "Capell\\SiteMonitor\\Health\\SiteMonitorHealthCheck"
+        },
+        {
+            "type": "migration",
+            "class": "Capell\\SiteMonitor\\Manifest\\SiteMonitorMigrationsContribution",
+            "migrationFiles": [
+                "2026_06_13_000001_create_site_monitor_targets_table",
+                "2026_06_13_000002_create_site_monitor_runs_table",
+                "2026_06_13_000003_create_site_monitor_incidents_table",
+                "2026_10_04_000001_remove_implicit_timestamp_updates_from_site_monitor"
+            ]
         }
     ],
     "database": {
