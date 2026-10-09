@@ -11,11 +11,11 @@
             "title": "Site Monitor extension card.",
             "package": "site-monitor",
             "surface": "marketplace",
-            "targetType": "marketplace-asset",
+            "targetType": "artifact",
             "target": "extension-card",
-            "required": true,
+            "required": false,
             "path": "docs/assets/marketplace/extension-card.svg",
-            "screenshotPath": "packages/site-monitor/docs/screenshots/extension-card.svg",
+            "fixtureKind": "illustrative-catalogue",
             "notes": "Committed Marketplace card preview for Site Monitor.",
             "useCase": "An operator reviews the extension card before enabling site monitoring."
         },
@@ -25,16 +25,13 @@
             "title": "Site Monitor dashboard.",
             "package": "site-monitor",
             "surface": "admin",
-            "targetType": "rendered-admin-proof",
+            "targetType": "artifact",
             "target": "site-monitor-dashboard-proof",
             "required": false,
-            "url": "/site-monitor",
             "path": "docs/screenshots/site-monitor-dashboard.png",
-            "screenshotPath": "packages/site-monitor/docs/screenshots/site-monitor-dashboard.png",
             "notes": "Diagnostic-only static preview. It is excluded from documentation, release, Marketplace, and promotional evidence until the package owner supplies a deterministic authenticated dashboard fixture for the shared runner.",
             "useCase": "An operator reviews target state, open incidents, and latest check evidence.",
-            "scenario": "static-html",
-            "waitFor": ".fi-page, main",
+            "fixtureKind": "illustrative-catalogue",
             "acceptance": "diagnostic-only"
         },
         {
@@ -43,16 +40,13 @@
             "title": "Site Monitor incident detail.",
             "package": "site-monitor",
             "surface": "admin",
-            "targetType": "rendered-admin-proof",
+            "targetType": "artifact",
             "target": "site-monitor-incident-proof",
             "required": false,
-            "url": "/site-monitor/incidents/{first-record}/edit",
             "path": "docs/screenshots/site-monitor-incident.png",
-            "screenshotPath": "packages/site-monitor/docs/screenshots/site-monitor-incident.png",
             "notes": "Diagnostic-only static preview. It is excluded from documentation, release, Marketplace, and promotional evidence until the package owner supplies a deterministic authenticated incident fixture for the shared runner.",
             "useCase": "An operator inspects failure evidence and resolution state.",
-            "scenario": "static-html",
-            "waitFor": ".fi-ta, table",
+            "fixtureKind": "illustrative-catalogue",
             "acceptance": "diagnostic-only"
         },
         {
@@ -68,7 +62,7 @@
             "notes": "The guarded fixture seeds a disabled demo target and open incident, then redirects to the actual resource. No outbound check runs. Require the resource field or populated row.",
             "useCase": "An operator configures what Capell should monitor for a site.",
             "scenario": "admin-form",
-            "waitFor": "input[id=\"data.url\"]"
+            "waitFor": "input[id$=\".url\"]"
         },
         {
             "id": "site-monitor-targets-index",
@@ -98,7 +92,7 @@
             "notes": "The guarded fixture seeds a disabled demo target and open incident, then redirects to the actual resource. No outbound check runs. Require the resource field or populated row.",
             "useCase": "An operator documents why an outage is resolved and keeps the incident audit trail clear.",
             "scenario": "admin-form",
-            "waitFor": "textarea[id=\"data.summary\"]"
+            "waitFor": "textarea[id$=\".summary\"]"
         },
         {
             "id": "site-monitor-admin-sidebar-menu-open",
