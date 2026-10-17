@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Capell\SiteMonitor\Filament\Resources\SiteMonitorIncidents;
 
 use BackedEnum;
+use Capell\Admin\Support\SiteScope;
 use Capell\Core\Facades\CapellCore;
 use Capell\SiteMonitor\Enums\SiteMonitorIncidentStatus;
 use Capell\SiteMonitor\Filament\Resources\SiteMonitorIncidents\Pages\EditSiteMonitorIncident;
@@ -73,7 +74,9 @@ final class SiteMonitorIncidentResource extends Resource
     #[Override]
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with(['target', 'latestRun']);
+        return parent::getEloquentQuery()
+            ->whereHas('target', static fn (Builder $query): Builder => SiteScope::applyForCurrentActor($query))
+            ->with(['target', 'latestRun']);
     }
 
     #[Override]

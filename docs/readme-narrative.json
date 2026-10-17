@@ -1,6 +1,6 @@
 {
     "whatThisPluginAdds": {
-        "text": "Site Monitor is a Pipeline package for planned external uptime, SSL certificate, domain-expiry, and incident monitoring.",
+        "text": "Site Monitor records HTTP availability, certificate expiry, domain expiry and incidents inside Capell admin, with checks running from your application host. It is a free first-party package with Stable maturity. Check the release catalogue for the verification and availability of the version you plan to install.",
         "evidence": [
             "capell.json",
             "src/Enums/SiteMonitorCheckType.php",
@@ -8,7 +8,7 @@
         ]
     },
     "surfaceOutcome": {
-        "text": "It is not supported as an installed operator surface yet. Its dashboard, resources, commands, schedule, and schema remain review-required until certification and host-install verification are complete.",
+        "text": "The package supplies a health dashboard, target and incident resources, scheduled checks and queue jobs. Installation requires current release evidence and host verification; configure the scheduler, queue worker and notification integration before relying on its alerts.",
         "evidence": [
             "capell.json",
             "src/Manifest/SiteMonitorDashboardPageContribution.php",
@@ -18,7 +18,7 @@
     },
     "whyItMatters": {
         "developers": {
-            "text": "The review scaffold contains typed check Actions, an outbound-URL guard, queued target jobs, models, and manifest contributions for certification work.",
+            "text": "Run checks outside the public render path, inspect typed results, connect incident events to your alerting system and retain operator-owned target settings during automatic discovery.",
             "evidence": [
                 "src/Actions/GuardSiteMonitorOutboundUrlAction.php",
                 "src/Actions/RunSiteMonitorCheckAction.php",
@@ -27,7 +27,7 @@
             ]
         },
         "teams": {
-            "text": "Teams should not depend on this package in production yet. Its intended outcome is one place to review external checks and incidents after certification is complete.",
+            "text": "Review failing targets and expiry warnings alongside other site operations. A check runs from your application host, not an independent monitoring network; retain independent monitoring for outages that also stop that host.",
             "evidence": [
                 "capell.json",
                 "src/Actions/BuildSiteMonitorDashboardAction.php",

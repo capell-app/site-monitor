@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Capell\SiteMonitor\Filament\Pages;
 
 use BackedEnum;
+use Capell\Admin\Contracts\Diagnostics\SiteHealthSubpage;
+use Capell\Admin\Filament\Pages\SiteHealthPage;
 use Capell\Admin\Support\SiteScope;
 use Capell\Core\Facades\CapellCore;
 use Capell\SiteMonitor\Actions\BuildSiteMonitorDashboardAction;
@@ -18,11 +20,13 @@ use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Override;
 
-final class SiteMonitorDashboardPage extends Page
+final class SiteMonitorDashboardPage extends Page implements SiteHealthSubpage
 {
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSignal;
 
     protected static string|BackedEnum|null $activeNavigationIcon = Heroicon::Signal;
+
+    protected static bool $shouldRegisterNavigation = true;
 
     protected static ?string $slug = 'site-monitor';
 
@@ -36,6 +40,12 @@ final class SiteMonitorDashboardPage extends Page
     public static function getNavigationLabel(): string
     {
         return __('capell-site-monitor::package.navigation.dashboard');
+    }
+
+    #[Override]
+    public static function getNavigationParentItem(): ?string
+    {
+        return SiteHealthPage::canAccess() ? SiteHealthPage::getNavigationLabel() : null;
     }
 
     #[Override]

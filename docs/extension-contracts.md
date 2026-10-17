@@ -41,6 +41,34 @@ function registerSiteMonitorDomainExpiryClientAdapter(\Capell\SiteMonitor\Contra
 }
 ```
 
+## Contract `Capell\SiteMonitor\Contracts\SiteMonitorHostResolver`
+
+<!-- example: contract Capell\SiteMonitor\Contracts\SiteMonitorHostResolver -->
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace App\CapellExamples\SiteMonitor;
+
+final class SiteMonitorHostResolverAdapter implements \Capell\SiteMonitor\Contracts\SiteMonitorHostResolver
+{
+    public function __construct(private readonly \Capell\SiteMonitor\Contracts\SiteMonitorHostResolver $backend) {}
+
+    #[\Override]
+    public function addresses(string $host): array
+    {
+        return $this->backend->addresses($host);
+    }
+}
+
+function registerSiteMonitorHostResolverAdapter(\Capell\SiteMonitor\Contracts\SiteMonitorHostResolver $backend): void
+{
+    app()->bind(SiteMonitorHostResolverAdapter::class, static fn (): SiteMonitorHostResolverAdapter => new SiteMonitorHostResolverAdapter($backend));
+    app()->bind(\Capell\SiteMonitor\Contracts\SiteMonitorHostResolver::class, SiteMonitorHostResolverAdapter::class);
+}
+```
+
 ## Contract `Capell\SiteMonitor\Contracts\SiteMonitorHttpClient`
 
 <!-- example: contract Capell\SiteMonitor\Contracts\SiteMonitorHttpClient -->

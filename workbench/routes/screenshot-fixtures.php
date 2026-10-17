@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Capell\SiteMonitor\Actions\PrepareSiteMonitorScreenshotAction;
+use Capell\SiteMonitor\Actions\Fixtures\PrepareSiteMonitorScreenshotAction;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Route;

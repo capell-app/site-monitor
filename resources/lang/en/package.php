@@ -95,6 +95,9 @@ return [
             'failed' => 'Failed',
         ],
     ],
+    'validation' => [
+        'site_missing' => 'Choose an existing site for this monitor.',
+    ],
     'health' => [
         'storage' => [
             'label' => 'Site Monitor storage',

@@ -6,6 +6,7 @@ namespace Capell\SiteMonitor\Policies;
 
 use Capell\Admin\Policies\Concerns\ResolvesShieldPermission;
 use Capell\Admin\Support\SiteScope;
+use Capell\Core\Support\Permissions\SiteAccess;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User;
 use Throwable;
@@ -86,11 +87,11 @@ abstract class AbstractSiteMonitorResourcePolicy
     {
         $siteId = $this->recordSiteId($record);
 
-        if ($siteId === null || SiteScope::isGlobalActor($user)) {
+        if (SiteScope::isGlobalActor($user)) {
             return true;
         }
 
-        return $user->getAssignedSiteIds()->contains($siteId);
+        return $siteId !== null && SiteAccess::forActor($user)->canSiteId($siteId);
     }
 
     protected function recordSiteId(Model $record): ?int
@@ -105,13 +106,7 @@ abstract class AbstractSiteMonitorResourcePolicy
      */
     private function hasAnyPermission(User $user, array $abilities): bool
     {
-        foreach ($abilities as $ability) {
-            if ($this->hasPermission($user, $ability)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($abilities, fn (string $ability): bool => $this->hasPermission($user, $ability));
     }
 
     private function hasPermission(User $user, string $ability): bool

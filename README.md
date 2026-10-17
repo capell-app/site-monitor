@@ -4,16 +4,16 @@
 
 ## What This Plugin Adds
 
-Site Monitor is a **Pipeline**, **Schema-owning** Capell package in the **Capell Operations** product group. It is tracked as `capell-app/site-monitor` and plans these surfaces: admin, console, shared.
+Site Monitor is an **Available**, **Schema-owning** Capell package in the **Capell Operations** product group. It ships as `capell-app/site-monitor` and extends these surfaces: admin, console, shared.
 
-Site Monitor is a Pipeline package for planned external uptime, SSL certificate, domain-expiry, and incident monitoring.
+Site Monitor records HTTP availability, certificate expiry, domain expiry and incidents inside Capell admin, with checks running from your application host. It is a free first-party package with Stable maturity. Check the release catalogue for the verification and availability of the version you plan to install.
 
-It is not supported as an installed operator surface yet. Its dashboard, resources, commands, schedule, and schema remain review-required until certification and host-install verification are complete.
+The package supplies a health dashboard, target and incident resources, scheduled checks and queue jobs. Installation requires current release evidence and host verification; configure the scheduler, queue worker and notification integration before relying on its alerts.
 
 Status details:
 
-- Status: Pipeline
-- Tier: premium
+- Status: Available
+- Tier: free
 - Bundle: operations
 - Composer package: `capell-app/site-monitor`
 - Namespace: `Capell\SiteMonitor`
@@ -21,22 +21,22 @@ Status details:
 
 ## Why It Matters
 
-**For developers:** The review scaffold contains typed check Actions, an outbound-URL guard, queued target jobs, models, and manifest contributions for certification work.
+**For developers:** Run checks outside the public render path, inspect typed results, connect incident events to your alerting system and retain operator-owned target settings during automatic discovery.
 
-**For teams:** Teams should not depend on this package in production yet. Its intended outcome is one place to review external checks and incidents after certification is complete.
+**For teams:** Review failing targets and expiry warnings alongside other site operations. A check runs from your application host, not an independent monitoring network; retain independent monitoring for outages that also stop that host.
 
 ## Screens And Workflow
 
 Screenshot contract: `docs/screenshots.json`.
 
-![Site Monitor extension card](docs/screenshots/extension-card.svg)
-
 ![Site Monitor target form](docs/screenshots/site-monitor-target-form.png)
 
-- Site Monitor extension card (marketplace, required evidence).
-- Site Monitor dashboard (admin, supplementary evidence).
-- Site Monitor incident detail (admin, supplementary evidence).
-- Site Monitor target form (admin, supplementary evidence).
+![Site Monitor targets index](docs/screenshots/site-monitor-targets-index.png)
+
+- Site Monitor extension card (marketplace, supplementary documentation fixture).
+- Site Monitor dashboard (admin, supplementary documentation fixture).
+- Site Monitor incident detail (admin, supplementary documentation fixture).
+- Site Monitor target form (admin, required evidence).
 - Site Monitor targets index (admin, supplementary evidence).
 - Site Monitor incident resolution form (admin, supplementary evidence).
 - Site Monitor dashboard with admin sidebar menu open (admin, supplementary evidence).
@@ -57,6 +57,7 @@ Screenshot contract: `docs/screenshots.json`.
 - `packages/site-monitor/database/migrations/2026_06_13_000001_create_site_monitor_targets_table.php`
 - `packages/site-monitor/database/migrations/2026_06_13_000002_create_site_monitor_runs_table.php`
 - `packages/site-monitor/database/migrations/2026_06_13_000003_create_site_monitor_incidents_table.php`
+- `packages/site-monitor/database/migrations/2026_10_04_000001_remove_implicit_timestamp_updates_from_site_monitor.php`
 
 ### Models
 
@@ -84,6 +85,7 @@ Screenshot contract: `docs/screenshots.json`.
 ### Extension contracts
 
 - `SiteMonitorDomainExpiryClient`
+- `SiteMonitorHostResolver`
 - `SiteMonitorHttpClient`
 
 ### Events
@@ -93,6 +95,7 @@ Screenshot contract: `docs/screenshots.json`.
 
 ### Actions
 
+- `AuthoriseSiteMonitorTargetSiteAction`
 - `BuildSiteMonitorDashboardAction`
 - `GuardSiteMonitorOutboundUrlAction`
 - `PrepareSiteMonitorScreenshotAction`
@@ -101,6 +104,7 @@ Screenshot contract: `docs/screenshots.json`.
 - `ReconcileSiteMonitorIncidentAction`
 - `RecordSiteMonitorRunAction`
 - `ResolveRdapEndpointAction`
+- `ResolveSiteMonitorSocketAddressAction`
 - `ResolveSiteMonitorTargetsAction`
 - `RunDueSiteMonitorChecksAction`
 - `RunSiteMonitorCheckAction`
@@ -146,6 +150,7 @@ Screenshot contract: `docs/screenshots.json`.
 - `admin-resource: Capell\SiteMonitor\Manifest\SiteMonitorTargetResourceContribution`
 - `console-command: Capell\SiteMonitor\Manifest\SiteMonitorConsoleCommandsContribution`
 - `health-check: Capell\SiteMonitor\Manifest\SiteMonitorHealthContribution`
+- `migration: Capell\SiteMonitor\Manifest\SiteMonitorMigrationsContribution`
 - `model: Capell\SiteMonitor\Manifest\SiteMonitorIncidentModelContribution`
 - `model: Capell\SiteMonitor\Manifest\SiteMonitorRunModelContribution`
 - `model: Capell\SiteMonitor\Manifest\SiteMonitorTargetModelContribution`
@@ -169,13 +174,12 @@ Screenshot contract: `docs/screenshots.json`.
 - Required tables: `site_monitor_targets`, `site_monitor_runs`, `site_monitor_incidents`.
 - Models: `SiteMonitorIncident`, `SiteMonitorRun`, `SiteMonitorTarget`.
 - Core record references in migrations: `sites via site_id`, `languages via language_id`.
-- Migration files: `2026_06_13_000001_create_site_monitor_targets_table.php`, `2026_06_13_000002_create_site_monitor_runs_table.php`, `2026_06_13_000003_create_site_monitor_incidents_table.php`.
-- Migration impact: review required; migration files exist and must be verified through the host install flow.
+- Migration files: `2026_06_13_000001_create_site_monitor_targets_table.php`, `2026_06_13_000002_create_site_monitor_runs_table.php`, `2026_06_13_000003_create_site_monitor_incidents_table.php`, `2026_10_04_000001_remove_implicit_timestamp_updates_from_site_monitor.php`.
+- Migration impact: run host migrations through the package install flow before opening package surfaces.
 - Deletion/retention behaviour: migrations declare cascade-on-delete relationships and null-on-delete relationships; no timed pruning or retention schedule is declared in `capell.json`.
 
 ## Install Impact
 
-- Availability: Pipeline; review required before installing in a host Capell app.
 - Required packages: `capell-app/admin`, `capell-app/core`, `capell-app/discovery-foundation`, `capell-app/frontend`.
 - Admin navigation: declares `admin-page: SiteMonitorDashboardPageContribution`, `admin-resource: SiteMonitorIncidentResourceContribution`, `admin-resource: SiteMonitorTargetResourceContribution`; each Filament page or resource controls its own navigation visibility.
 - Admin/editor extensions: none declared.
@@ -190,23 +194,25 @@ Screenshot contract: `docs/screenshots.json`.
 
 ## Common Pitfalls
 
-- Do not describe review-required providers, routes, migrations, commands, or admin resources as shipped install behaviour.
-- Keep class references out of `capell.json` until those classes exist and focused tests pass.
-- Keep screenshot and workflow notes labelled as review-required until real package screens are captured or verified.
+- Keep required Capell packages on compatible v4 releases: `capell-app/admin`, `capell-app/core`, `capell-app/discovery-foundation`, `capell-app/frontend`.
+- Run migrations before opening package resources or public routes.
+- Review package configuration before production-like verification: `config/capell-site-monitor.php`.
+- Keep the host Laravel scheduler running so package-registered schedules can execute: `capell:site-monitor:run (everyMinute; package registered)`.
+- Custom write integrations must preserve invalidation for `site-monitor` cache tags.
 
 ## Troubleshooting
 
 | Symptom | Likely cause | Check | Fix |
 | --- | --- | --- | --- |
 | Package health check reports a problem | Package configuration or runtime dependencies are not ready | Run `php artisan capell:site-monitor:doctor` | Follow the reported checks, then rerun the doctor command |
-| Package tests fail before assertions | Manifest or provider metadata references classes that do not exist yet | Check `capell.json`, package `composer.json`, and provider imports | Remove planned class references or add the classes and focused tests before marking the package Available |
-| Docs describe installable behaviour | Pipeline docs drifted into shipped-language claims | Check `status`, `Install Impact`, and `Quick Start` | Keep the package labelled Pipeline until the install flow is verified |
+| Package surface is missing after install | Provider or manifest is not loaded | Confirm `capell.json`, package `composer.json`, and provider registration | Reinstall the package, refresh Composer autoload, and clear host caches |
+| Admin screen or command fails on missing table | Package migrations have not run | Check the tables listed in `Data Model` | Run host migrations and rerun the focused package test |
+| Background work does not run | Queue worker or declared schedule is not active | Check the jobs and scheduled commands listed in `Technical Shape` | Start the queue worker or host scheduler, then run the focused command or package test |
 
 ## Quick Start
 
-1. Review `capell.json`, package docs, and any scaffolded source before treating the package as installable.
-2. Complete certification review, host install verification, migrations, and admin surface checks.
-3. Run the docs checks, focused package tests, and install verification before changing the status from Pipeline to Available.
+1. Install the package: `composer require capell-app/site-monitor`.
+2. Open the package admin page or resource and verify Site Monitor is available.
 
 ## Next Steps
 

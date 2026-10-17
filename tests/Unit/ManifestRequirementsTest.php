@@ -7,6 +7,7 @@ use Capell\Core\Contracts\Extensions\ExtensionContribution;
 use Capell\Core\Contracts\Extensions\RegistersExtensionAdminResource;
 use Capell\Core\Contracts\Extensions\RunsScheduledExtensionJob;
 use Capell\SiteMonitor\Console\Commands\RunSiteMonitorCommand;
+use Capell\SiteMonitor\Console\Commands\SeedSiteMonitorScreenshotFixtureCommand;
 use Capell\SiteMonitor\Console\Commands\SiteMonitorDoctorCommand;
 use Capell\SiteMonitor\Events\SiteMonitorIncidentOpened;
 use Capell\SiteMonitor\Events\SiteMonitorIncidentResolved;
@@ -26,6 +27,9 @@ use Capell\SiteMonitor\Manifest\SiteMonitorTargetResourceContribution;
 use Capell\SiteMonitor\Models\SiteMonitorIncident;
 use Capell\SiteMonitor\Models\SiteMonitorRun;
 use Capell\SiteMonitor\Models\SiteMonitorTarget;
+use Capell\SiteMonitor\Providers\AdminServiceProvider;
+use Capell\SiteMonitor\Providers\SiteMonitorServiceProvider;
+use Capell\Tests\Support\CapellManifest;
 
 it('declares the implemented package surfaces in capell manifest', function (): void {
     $manifest = capell_json_file_array(__DIR__ . '/../../capell.json');
@@ -33,8 +37,8 @@ it('declares the implemented package surfaces in capell manifest', function (): 
 
     throw_unless(is_array($contributes), RuntimeException::class, 'Expected Site Monitor manifest contributions.');
 
-    expect(data_get($manifest, 'providers.runtime', []))->toContain('Capell\\SiteMonitor\\Providers\\SiteMonitorServiceProvider')
-        ->and(data_get($manifest, 'providers.admin', []))->toContain('Capell\\SiteMonitor\\Providers\\AdminServiceProvider')
+    expect(data_get($manifest, 'providers.runtime', []))->toContain(SiteMonitorServiceProvider::class)
+        ->and(data_get($manifest, 'providers.admin', []))->toContain(AdminServiceProvider::class)
         ->and(data_get($manifest, 'database.migrations'))->toBeTrue()
         ->and(data_get($manifest, 'commands.run'))->toBe('capell:site-monitor:run')
         ->and(data_get($manifest, 'commands.doctor'))->toBe('capell:site-monitor:doctor')
@@ -86,10 +90,12 @@ it('declares the implemented package surfaces in capell manifest', function (): 
             'commands' => [
                 'capell:site-monitor:run',
                 'capell:site-monitor:doctor',
+                'capell:site-monitor-screenshot-fixture',
             ],
             'commandClasses' => [
                 RunSiteMonitorCommand::class,
                 SiteMonitorDoctorCommand::class,
+                SeedSiteMonitorScreenshotFixtureCommand::class,
             ],
         ])
         ->and($contributes)->toContain([
@@ -112,4 +118,11 @@ it('declares the implemented package surfaces in capell manifest', function (): 
         ->and(class_implements(SiteMonitorHealthContribution::class))->toContain(ChecksExtensionHealth::class)
         ->and(class_exists(SiteMonitorIncidentOpened::class))->toBeTrue()
         ->and(class_exists(SiteMonitorIncidentResolved::class))->toBeTrue();
+});
+
+it('declares the guarded screenshot command in the command map and contribution inventory', function (): void {
+    $path = __DIR__ . '/../../capell.json';
+    expect(CapellManifest::screenshotFixtureCommand($path))->toBe('capell:site-monitor-screenshot-fixture')
+        ->and(CapellManifest::consoleCommandNames($path))->toContain('capell:site-monitor-screenshot-fixture')
+        ->and(CapellManifest::consoleCommandClasses($path))->toContain(SeedSiteMonitorScreenshotFixtureCommand::class);
 });

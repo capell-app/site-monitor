@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Capell\SiteMonitor\Actions;
 
+use Capell\DiscoveryFoundation\Actions\BuildPublicUrlRegistryAction;
 use Capell\SiteMonitor\Enums\SiteMonitorCheckType;
 use Capell\SiteMonitor\Enums\SiteMonitorState;
 use Capell\SiteMonitor\Models\SiteMonitorTarget;
@@ -18,7 +19,7 @@ final class ResolveSiteMonitorTargetsAction
     use AsFake;
     use AsObject;
 
-    private const string PUBLIC_URL_REGISTRY_ACTION = 'Capell\\DiscoveryFoundation\\Actions\\BuildPublicUrlRegistryAction';
+    private const string PUBLIC_URL_REGISTRY_ACTION = BuildPublicUrlRegistryAction::class;
 
     /**
      * @return Collection<int, SiteMonitorTarget>
@@ -36,7 +37,7 @@ final class ResolveSiteMonitorTargetsAction
                     ->whereNull('next_check_at')
                     ->orWhere('next_check_at', '<=', CarbonImmutable::now());
             })
-            ->orderBy('next_check_at')
+            ->oldest('next_check_at')
             ->orderBy('id')
             ->limit($this->integerConfig('capell-site-monitor.batch_size', 50))
             ->get();
@@ -76,18 +77,16 @@ final class ResolveSiteMonitorTargetsAction
             $title = data_get($entry, 'title');
             $routeName = data_get($entry, 'routeName');
 
-            SiteMonitorTarget::query()->updateOrCreate(
+            $target = SiteMonitorTarget::query()->firstOrNew(
                 [
                     'source_package' => 'capell-app/site-discovery',
                     'source_key' => $sourceKey,
                 ],
-                [
-                    'site_id' => $this->nullableInteger(data_get($entry, 'siteId')),
-                    'language_id' => $this->nullableInteger(data_get($entry, 'languageId')),
-                    'name' => is_string($title) && $title !== '' ? $title : $canonicalUrl,
-                    'url' => $canonicalUrl,
+            );
+
+            if (! $target->exists) {
+                $target->fill([
                     'check_type' => SiteMonitorCheckType::HttpStatus,
-                    'route_name' => is_string($routeName) ? $routeName : null,
                     'interval_minutes' => $this->integerConfig('capell-site-monitor.default_interval_minutes', 5),
                     'timeout_ms' => $this->integerConfig('capell-site-monitor.default_timeout_ms', 5000),
                     'failure_threshold' => $this->integerConfig('capell-site-monitor.default_failure_threshold', 2),
@@ -95,8 +94,17 @@ final class ResolveSiteMonitorTargetsAction
                     'expected_status_maximum' => 399,
                     'enabled' => true,
                     'current_state' => SiteMonitorState::Unknown,
-                ],
-            );
+                ]);
+            }
+
+            // Discovery owns identity, not an operator's settings or recorded health.
+            $target->fill([
+                'site_id' => $this->nullableInteger(data_get($entry, 'siteId')),
+                'language_id' => $this->nullableInteger(data_get($entry, 'languageId')),
+                'name' => is_string($title) && $title !== '' ? $title : $canonicalUrl,
+                'url' => $canonicalUrl,
+                'route_name' => is_string($routeName) ? $routeName : null,
+            ])->save();
         }
     }
 

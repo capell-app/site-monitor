@@ -8,14 +8,30 @@ use Capell\SiteMonitor\Contracts\SiteMonitorHttpClient;
 use Capell\SiteMonitor\Data\SiteMonitorCheckResultData;
 use Capell\SiteMonitor\Enums\SiteMonitorCheckType;
 use Capell\SiteMonitor\Enums\SiteMonitorState;
-use Capell\SiteMonitor\Exceptions\UnsafeSiteMonitorTargetException;
 use Capell\SiteMonitor\Models\SiteMonitorTarget;
 use Capell\SiteMonitor\Support\LaravelSiteMonitorHttpClient;
 use Capell\SiteMonitor\Support\RdapDomainExpiryClient;
 use Capell\SiteMonitor\Tests\Fixtures\FakeSiteMonitorDomainExpiryClient;
 use Capell\SiteMonitor\Tests\Fixtures\FakeSiteMonitorHttpClient;
 use Carbon\CarbonImmutable;
+use GuzzleHttp\Promise\PromiseInterface;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+
+it('disables automatic RDAP redirects so an endpoint cannot bypass the outbound guard', function (): void {
+    $redirectPolicy = null;
+    Http::preventStrayRequests();
+    Http::fake(/** @param array<string, mixed> $options */ function (Request $request, array $options) use (&$redirectPolicy): PromiseInterface {
+        $redirectPolicy = $options['allow_redirects'] ?? null;
+
+        return Http::response('', 302, ['Location' => 'http://127.0.0.1/private']);
+    });
+    config()->set('capell-site-monitor.rdap_endpoints', ['com' => 'https://93.184.216.34/domain/{domain}']);
+
+    expect((new RdapDomainExpiryClient)->expiresAt('example.com'))->toBeNull()
+        ->and($redirectPolicy)->toBeFalse();
+    Http::assertSentCount(1);
+});
 
 it('passes HTTP status checks in the configured status range', function (): void {
     app()->instance(SiteMonitorHttpClient::class, new FakeSiteMonitorHttpClient(new SiteMonitorCheckResultData(
@@ -178,15 +194,20 @@ it('revalidates redirects before following them', function (): void {
 it('rejects private addresses resolved for HTTP cURL pinning', function (): void {
     $client = new LaravelSiteMonitorHttpClient;
 
-    expect(fn (): mixed => invokeSiteMonitorResolvedAddress($client, '10.0.0.5'))
-        ->toThrow(UnsafeSiteMonitorTargetException::class);
+    Http::fake();
+    $result = $client->check(siteMonitorTarget(SiteMonitorCheckType::HttpStatus, ['url' => 'https://10.0.0.5/private']));
+
+    expect($result->state)->toBe(SiteMonitorState::Failing)
+        ->and($result->errorType)->toBe('unsafe_target_address');
+    Http::assertNothingSent();
 });
 
-it('rejects private addresses resolved for RDAP cURL pinning', function (): void {
-    $client = new RdapDomainExpiryClient;
+it('rejects private RDAP endpoints without sending an HTTP request', function (): void {
+    Http::fake();
+    config()->set('capell-site-monitor.rdap_endpoints', ['test' => 'https://10.0.0.5/domain/{domain}']);
 
-    expect(fn (): mixed => invokeSiteMonitorResolvedAddress($client, '10.0.0.5'))
-        ->toThrow(UnsafeSiteMonitorTargetException::class);
+    expect((new RdapDomainExpiryClient)->expiresAt('example.test'))->toBeNull();
+    Http::assertNothingSent();
 });
 
 /**
@@ -207,9 +228,4 @@ function siteMonitorTarget(SiteMonitorCheckType $checkType, array $overrides = [
         'current_state' => SiteMonitorState::Unknown,
         ...$overrides,
     ]);
-}
-
-function invokeSiteMonitorResolvedAddress(object $client, string $host): mixed
-{
-    return (new ReflectionMethod($client, 'resolvedAddress'))->invoke($client, $host);
 }

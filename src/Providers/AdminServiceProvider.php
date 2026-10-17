@@ -6,7 +6,7 @@ namespace Capell\SiteMonitor\Providers;
 
 use Capell\Admin\Data\AdminSurfaceContributionData;
 use Capell\Admin\Facades\CapellAdmin;
-use Capell\Core\Facades\CapellCore;
+use Capell\Core\Support\Packages\RegistersInstalledRuntime;
 use Capell\SiteMonitor\Filament\Pages\SiteMonitorDashboardPage;
 use Capell\SiteMonitor\Filament\Resources\SiteMonitorIncidents\SiteMonitorIncidentResource;
 use Capell\SiteMonitor\Filament\Resources\SiteMonitorTargets\SiteMonitorTargetResource;
@@ -20,30 +20,18 @@ use Override;
 
 final class AdminServiceProvider extends ServiceProvider
 {
+    use RegistersInstalledRuntime;
+
     #[Override]
     public function register(): void
     {
-        if (! $this->isPackageInstalled()) {
-            return;
-        }
-
-        $this->registerAdminSurface();
-        $this->registerPolicies();
+        $this->registerInstalledRuntime(SiteMonitorServiceProvider::$packageName, 'admin');
     }
 
-    public function boot(): void
+    protected function bootInstalledRuntime(): void
     {
-        if (! $this->isPackageInstalled()) {
-            return;
-        }
-
         $this->registerAdminSurface();
         $this->registerPolicies();
-    }
-
-    private function isPackageInstalled(): bool
-    {
-        return CapellCore::isPackageInstalled(SiteMonitorServiceProvider::$packageName);
     }
 
     private function registerAdminSurface(): void

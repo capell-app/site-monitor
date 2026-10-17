@@ -12,10 +12,12 @@ use Capell\SiteMonitor\Exceptions\UnsafeSiteMonitorTargetException;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Http;
 use InvalidArgumentException;
+use Override;
 use Throwable;
 
 final class RdapDomainExpiryClient implements SiteMonitorDomainExpiryClient
 {
+    #[Override]
     public function expiresAt(string $domain): ?CarbonImmutable
     {
         $domain = strtolower(trim($domain));
@@ -102,6 +104,7 @@ final class RdapDomainExpiryClient implements SiteMonitorDomainExpiryClient
         throw_unless(defined('CURLOPT_RESOLVE'), InvalidArgumentException::class, 'Site monitor RDAP checks require cURL host pinning support.');
 
         return [
+            'allow_redirects' => false,
             'curl' => [
                 CURLOPT_RESOLVE => [sprintf('%s:%d:%s', $endpoint['host'], $endpoint['port'], $endpoint['address'])],
             ],

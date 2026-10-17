@@ -7,12 +7,15 @@ namespace Capell\SiteMonitor\Providers;
 use Capell\Core\Facades\CapellCore;
 use Capell\Core\Support\Packages\AbstractPackageServiceProvider;
 use Capell\SiteMonitor\Console\Commands\RunSiteMonitorCommand;
+use Capell\SiteMonitor\Console\Commands\SeedSiteMonitorScreenshotFixtureCommand;
 use Capell\SiteMonitor\Console\Commands\SiteMonitorDoctorCommand;
 use Capell\SiteMonitor\Contracts\SiteMonitorDomainExpiryClient;
+use Capell\SiteMonitor\Contracts\SiteMonitorHostResolver;
 use Capell\SiteMonitor\Contracts\SiteMonitorHttpClient;
 use Capell\SiteMonitor\Models\SiteMonitorIncident;
 use Capell\SiteMonitor\Models\SiteMonitorRun;
 use Capell\SiteMonitor\Models\SiteMonitorTarget;
+use Capell\SiteMonitor\Support\DnsSiteMonitorHostResolver;
 use Capell\SiteMonitor\Support\LaravelSiteMonitorHttpClient;
 use Capell\SiteMonitor\Support\RdapDomainExpiryClient;
 use Illuminate\Console\Scheduling\Schedule;
@@ -36,6 +39,7 @@ final class SiteMonitorServiceProvider extends AbstractPackageServiceProvider
             ->hasCommands([
                 RunSiteMonitorCommand::class,
                 SiteMonitorDoctorCommand::class,
+                SeedSiteMonitorScreenshotFixtureCommand::class,
             ])
             ->hasMigrations([
                 '2026_06_13_000001_create_site_monitor_targets_table',
@@ -53,16 +57,13 @@ final class SiteMonitorServiceProvider extends AbstractPackageServiceProvider
         $this->app->register(AdminServiceProvider::class);
 
         $this->app->bind(SiteMonitorHttpClient::class, LaravelSiteMonitorHttpClient::class);
+        $this->app->bind(SiteMonitorHostResolver::class, DnsSiteMonitorHostResolver::class);
         $this->app->bind(SiteMonitorDomainExpiryClient::class, RdapDomainExpiryClient::class);
     }
 
     #[Override]
-    public function packageBooted(): void
+    protected function bootInstalledRuntime(): void
     {
-        if (! $this->isPackageInstalled()) {
-            return;
-        }
-
         $this
             ->registerModels()
             ->registerProtectedTables();
@@ -71,17 +72,11 @@ final class SiteMonitorServiceProvider extends AbstractPackageServiceProvider
             return;
         }
 
-        $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
+        $this->registerSchedule(function (Schedule $schedule): void {
             $schedule->command('capell:site-monitor:run')
                 ->everyMinute()
                 ->withoutOverlapping();
         });
-    }
-
-    #[Override]
-    protected function isPackageInstalled(): bool
-    {
-        return CapellCore::isPackageInstalled(self::$packageName);
     }
 
     private function registerModels(): self
@@ -93,7 +88,6 @@ final class SiteMonitorServiceProvider extends AbstractPackageServiceProvider
         ];
 
         $this->surface()->models($models);
-        CapellCore::registerModels($models);
 
         return $this;
     }

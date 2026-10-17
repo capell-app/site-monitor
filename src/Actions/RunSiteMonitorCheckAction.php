@@ -35,8 +35,8 @@ final class RunSiteMonitorCheckAction
     {
         try {
             GuardSiteMonitorOutboundUrlAction::run($target->url);
-        } catch (UnsafeSiteMonitorTargetException $exception) {
-            return $this->expiryFailure($exception->errorType, $exception->getMessage());
+        } catch (UnsafeSiteMonitorTargetException $unsafeSiteMonitorTargetException) {
+            return $this->expiryFailure($unsafeSiteMonitorTargetException->errorType, $unsafeSiteMonitorTargetException->getMessage());
         }
 
         $result = resolve(SiteMonitorHttpClient::class)->check($target);
@@ -87,11 +87,12 @@ final class RunSiteMonitorCheckAction
     {
         try {
             $host = GuardSiteMonitorOutboundUrlAction::run($target->url);
-        } catch (UnsafeSiteMonitorTargetException $exception) {
-            return $this->expiryFailure($exception->errorType, $exception->getMessage());
+            $address = ResolveSiteMonitorSocketAddressAction::run($host);
+        } catch (UnsafeSiteMonitorTargetException $unsafeSiteMonitorTargetException) {
+            return $this->expiryFailure($unsafeSiteMonitorTargetException->errorType, $unsafeSiteMonitorTargetException->getMessage());
         }
 
-        $expiresAt = $this->sslCertificateExpiresAt($host, $target->timeout_ms);
+        $expiresAt = $this->sslCertificateExpiresAt($host, $address, $target->timeout_ms);
 
         if (! $expiresAt instanceof CarbonImmutable) {
             return $this->expiryFailure('ssl_certificate_unavailable', 'SSL certificate expiry could not be resolved.');
@@ -104,8 +105,8 @@ final class RunSiteMonitorCheckAction
     {
         try {
             $host = GuardSiteMonitorOutboundUrlAction::run($target->url);
-        } catch (UnsafeSiteMonitorTargetException $exception) {
-            return $this->expiryFailure($exception->errorType, $exception->getMessage());
+        } catch (UnsafeSiteMonitorTargetException $unsafeSiteMonitorTargetException) {
+            return $this->expiryFailure($unsafeSiteMonitorTargetException->errorType, $unsafeSiteMonitorTargetException->getMessage());
         }
 
         if (! is_string(ResolveRdapEndpointAction::run($host))) {
@@ -172,11 +173,13 @@ final class RunSiteMonitorCheckAction
         );
     }
 
-    private function sslCertificateExpiresAt(string $host, int $timeoutMs): ?CarbonImmutable
+    private function sslCertificateExpiresAt(string $host, string $address, int $timeoutMs): ?CarbonImmutable
     {
         $context = stream_context_create([
             'ssl' => [
                 'capture_peer_cert' => true,
+                'peer_name' => $host,
+                'SNI_enabled' => true,
                 'verify_peer' => false,
                 'verify_peer_name' => false,
             ],
@@ -184,7 +187,7 @@ final class RunSiteMonitorCheckAction
 
         try {
             $client = @stream_socket_client(
-                sprintf('ssl://%s:443', $host),
+                sprintf('ssl://%s:443', str_contains($address, ':') ? '[' . $address . ']' : $address),
                 $errorCode,
                 $errorMessage,
                 max(1, (int) ceil($timeoutMs / 1000)),

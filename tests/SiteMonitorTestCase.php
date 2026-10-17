@@ -7,6 +7,8 @@ namespace Capell\SiteMonitor\Tests;
 use Capell\Admin\Providers\AdminServiceProvider;
 use Capell\Admin\Providers\Filament\AdminPanelProvider;
 use Capell\Core\Facades\CapellCore;
+use Capell\DiscoveryFoundation\Providers\DiscoveryFoundationServiceProvider;
+use Capell\Frontend\Providers\FrontendServiceProvider;
 use Capell\SiteMonitor\Providers\AdminServiceProvider as SiteMonitorAdminServiceProvider;
 use Capell\SiteMonitor\Providers\SiteMonitorServiceProvider;
 use Capell\Tests\AbstractTestCase;
@@ -15,6 +17,7 @@ use Override;
 
 class SiteMonitorTestCase extends AbstractTestCase
 {
+    #[Override]
     protected function getPackageServiceName(): string
     {
         return 'capell-site-monitor';
@@ -29,6 +32,8 @@ class SiteMonitorTestCase extends AbstractTestCase
         return [
             ...parent::getPackageProviders($app),
             AdminServiceProvider::class,
+            DiscoveryFoundationServiceProvider::class,
+            FrontendServiceProvider::class,
             AdminPanelProvider::class,
             LivewireServiceProvider::class,
             SiteMonitorServiceProvider::class,
@@ -42,6 +47,9 @@ class SiteMonitorTestCase extends AbstractTestCase
         parent::getEnvironmentSetUp($app);
 
         CapellCore::forcePackageInstalled(AdminServiceProvider::$packageName);
+        // Runtime activation waits for the package's declared dependencies.
+        CapellCore::forcePackageInstalled(DiscoveryFoundationServiceProvider::$packageName);
+        CapellCore::forcePackageInstalled(FrontendServiceProvider::$packageName);
         CapellCore::forcePackageInstalled(SiteMonitorServiceProvider::$packageName);
 
         config()->set('cache.default', 'array');

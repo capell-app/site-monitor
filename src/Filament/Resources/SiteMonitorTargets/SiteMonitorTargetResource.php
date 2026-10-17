@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace Capell\SiteMonitor\Filament\Resources\SiteMonitorTargets;
 
 use BackedEnum;
+use Capell\Admin\Support\SiteScope;
 use Capell\Core\Facades\CapellCore;
+use Capell\Core\Models\Site;
+use Capell\Core\Support\Permissions\SiteAccess;
 use Capell\SiteMonitor\Actions\QueueSiteMonitorTargetCheckAction;
 use Capell\SiteMonitor\Enums\SiteMonitorCheckType;
 use Capell\SiteMonitor\Filament\Resources\SiteMonitorTargets\Pages\CreateSiteMonitorTarget;
@@ -28,6 +31,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Gate;
 use Override;
 
 final class SiteMonitorTargetResource extends Resource
@@ -48,7 +52,7 @@ final class SiteMonitorTargetResource extends Resource
                     TextInput::make('url')->label(__('capell-site-monitor::package.fields.url'))->url()->required()->maxLength(2048),
                     Select::make('check_type')->label(__('capell-site-monitor::package.fields.check_type'))->options(self::checkTypeOptions())->required(),
                     Toggle::make('enabled')->label(__('capell-site-monitor::package.fields.enabled'))->default(true),
-                    TextInput::make('site_id')->label(__('capell-site-monitor::package.fields.site_id'))->numeric(),
+                    Select::make('site_id')->label(__('capell-site-monitor::package.fields.site_id'))->options(self::siteOptions(...))->searchable()->required(fn (): bool => ! SiteAccess::current()->isGlobal()),
                     TextInput::make('language_id')->label(__('capell-site-monitor::package.fields.language_id'))->numeric(),
                     TextInput::make('interval_minutes')->label(__('capell-site-monitor::package.fields.interval_minutes'))->numeric()->required()->minValue(1)->default(self::integerConfig('capell-site-monitor.default_interval_minutes', 5)),
                     TextInput::make('timeout_ms')->label(__('capell-site-monitor::package.fields.timeout_ms'))->numeric()->required()->minValue(100)->default(self::integerConfig('capell-site-monitor.default_timeout_ms', 5000)),
@@ -91,7 +95,7 @@ final class SiteMonitorTargetResource extends Resource
     #[Override]
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with(['latestRun', 'openIncident']);
+        return SiteScope::applyForCurrentActor(parent::getEloquentQuery())->with(['latestRun', 'openIncident']);
     }
 
     #[Override]
@@ -140,7 +144,9 @@ final class SiteMonitorTargetResource extends Resource
         return Action::make('run_now')
             ->label(__('capell-site-monitor::package.actions.run_now'))
             ->icon('heroicon-o-play')
+            ->authorize(fn (SiteMonitorTarget $record): bool => Gate::allows('update', $record))
             ->action(function (SiteMonitorTarget $record): void {
+                Gate::authorize('update', $record);
                 QueueSiteMonitorTargetCheckAction::run($record);
 
                 Notification::make('capell_site_monitor_target_check_queued')
@@ -148,6 +154,15 @@ final class SiteMonitorTargetResource extends Resource
                     ->success()
                     ->send();
             });
+    }
+
+    /** @return array<int, string> */
+    private static function siteOptions(): array
+    {
+        return SiteScope::applyForCurrentActor(Site::query(), 'id')
+            ->get(['id', 'name'])
+            ->mapWithKeys(static fn (Site $site): array => [$site->id => (string) $site->name])
+            ->all();
     }
 
     private static function integerConfig(string $key, int $default): int
