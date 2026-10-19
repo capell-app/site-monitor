@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Capell\SiteMonitor\Actions\Fixtures;
 
+use Capell\ScreenshotFixtures\FixtureState;
 use Capell\SiteMonitor\Enums\SiteMonitorCheckType;
 use Capell\SiteMonitor\Enums\SiteMonitorIncidentStatus;
 use Capell\SiteMonitor\Enums\SiteMonitorState;
@@ -25,7 +26,12 @@ final class PrepareSiteMonitorScreenshotAction
             && getenv('CAPELL_SCREENSHOT_FIXTURE') === 'record-state'
             && is_string($appPath)
             && is_string($basePath)
-            && $appPath === $basePath, RuntimeException::class, 'Site Monitor screenshot fixtures require the selected disposable screenshot environment.');
+            && $appPath === $basePath
+                && (realpath(base_path()) === realpath(dirname(__DIR__, 5) . '/vendor/orchestra/testbench-core/laravel')
+                    || str_starts_with((string) realpath(base_path()), dirname(__DIR__, 5) . '/tmp/testbench-skeletons/')), RuntimeException::class, 'Site Monitor screenshot fixtures require the selected disposable screenshot environment.');
+
+        require_once dirname(__DIR__, 5) . '/scripts/screenshots/FixtureState.php';
+        FixtureState::boot();
 
         $captureEmail = getenv('CAPELL_SCREENSHOT_ADMIN_EMAIL') ?: (getenv('CAPELL_ADMIN_EMAIL') ?: 'admin@example.com');
         $authenticated = auth()->user();
