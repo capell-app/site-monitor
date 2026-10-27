@@ -28,19 +28,24 @@ final class PruneSiteMonitorRunsAction
         }
 
         $protectedRunIds = $this->protectedRunIds();
-        $cutoff = CarbonImmutable::now()->subDays($retentionDays);
+        $cutoff = CarbonImmutable::now('UTC')->subDays($retentionDays);
 
         /** @var Builder<SiteMonitorRun> $query */
-        $query = SiteMonitorRun::query()
-            ->where('checked_at', '<', $cutoff);
+        $query = SiteMonitorRun::query();
 
         if ($protectedRunIds !== []) {
             $query->whereNotIn('id', $protectedRunIds);
         }
 
-        $deleted = $query->delete();
+        $deleted = 0;
+        foreach ($query->lazyById() as $run) {
+            // Delete only when every possible legacy occurrence is expired.
+            if ($run->latestPossibleTimestamp('checked_at')?->lessThan($cutoff) === true) {
+                $deleted += $run->delete() ? 1 : 0;
+            }
+        }
 
-        return is_int($deleted) ? $deleted : 0;
+        return $deleted;
     }
 
     /**

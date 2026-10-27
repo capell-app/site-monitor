@@ -61,6 +61,7 @@ Screenshot contract: `docs/screenshots.json`.
 
 ### Models
 
+- `RetainsTimestampInstants`
 - `SiteMonitorIncident`
 - `SiteMonitorRun`
 - `SiteMonitorTarget`
@@ -90,6 +91,7 @@ Screenshot contract: `docs/screenshots.json`.
 
 ### Events
 
+- `SiteMonitorIncidentManuallyTransitioned`
 - `SiteMonitorIncidentOpened`
 - `SiteMonitorIncidentResolved`
 
@@ -97,8 +99,10 @@ Screenshot contract: `docs/screenshots.json`.
 
 - `AuthoriseSiteMonitorTargetSiteAction`
 - `BuildSiteMonitorDashboardAction`
-- `GuardSiteMonitorOutboundUrlAction`
+- `BuildSiteMonitorEvidenceAction`
 - `PrepareSiteMonitorScreenshotAction`
+- `GuardSiteMonitorOutboundUrlAction`
+- `OrderSiteMonitorTimestampsAction`
 - `PruneSiteMonitorRunsAction`
 - `QueueSiteMonitorTargetCheckAction`
 - `ReconcileSiteMonitorIncidentAction`
@@ -108,12 +112,16 @@ Screenshot contract: `docs/screenshots.json`.
 - `ResolveSiteMonitorTargetsAction`
 - `RunDueSiteMonitorChecksAction`
 - `RunSiteMonitorCheckAction`
+- `TransitionSiteMonitorIncidentAction`
+- `ValidateSiteMonitorStatusRangeAction`
 
 ### Data objects
 
 - `SiteMonitorCheckResultData`
 - `SiteMonitorDashboardData`
+- `SiteMonitorEvidenceData`
 - `SiteMonitorIncidentData`
+- `SiteMonitorIncidentTransitionData`
 - `SiteMonitorTargetData`
 
 ### Jobs
@@ -122,6 +130,7 @@ Screenshot contract: `docs/screenshots.json`.
 
 ### Command signatures
 
+- `capell:site-monitor-screenshot-fixture`
 - `capell:site-monitor:doctor`
 - `capell:site-monitor:run`
 
@@ -141,6 +150,7 @@ Screenshot contract: `docs/screenshots.json`.
 ### Console command classes
 
 - `RunSiteMonitorCommand`
+- `SeedSiteMonitorScreenshotFixtureCommand`
 - `SiteMonitorDoctorCommand`
 
 ### Manifest contributions
@@ -172,7 +182,7 @@ Screenshot contract: `docs/screenshots.json`.
 ## Data Model
 
 - Required tables: `site_monitor_targets`, `site_monitor_runs`, `site_monitor_incidents`.
-- Models: `SiteMonitorIncident`, `SiteMonitorRun`, `SiteMonitorTarget`.
+- Models: `RetainsTimestampInstants`, `SiteMonitorIncident`, `SiteMonitorRun`, `SiteMonitorTarget`.
 - Core record references in migrations: `sites via site_id`, `languages via language_id`.
 - Migration files: `2026_06_13_000001_create_site_monitor_targets_table.php`, `2026_06_13_000002_create_site_monitor_runs_table.php`, `2026_06_13_000003_create_site_monitor_incidents_table.php`, `2026_10_04_000001_remove_implicit_timestamp_updates_from_site_monitor.php`.
 - Migration impact: run host migrations through the package install flow before opening package surfaces.
@@ -190,7 +200,7 @@ Screenshot contract: `docs/screenshots.json`.
 - Settings: no package settings declared.
 - Queues or schedules: scheduled commands `capell:site-monitor:run (everyMinute; package registered)`; queue jobs `RunSiteMonitorTargetJob`.
 - Cache tags: `site-monitor`.
-- Commands: `capell:site-monitor:doctor`, `capell:site-monitor:run`.
+- Commands: `capell:site-monitor-screenshot-fixture`, `capell:site-monitor:doctor`, `capell:site-monitor:run`.
 
 ## Common Pitfalls
 
@@ -213,6 +223,10 @@ Screenshot contract: `docs/screenshots.json`.
 
 1. Install the package: `composer require capell-app/site-monitor`.
 2. Open the package admin page or resource and verify Site Monitor is available.
+
+## Upgrading
+
+No manual steps between minor versions.
 
 ## Next Steps
 

@@ -61,7 +61,8 @@ it('records an explicit failure when a queued check exhausts its retries', funct
     $targetId = $target->getKey();
     throw_unless(is_int($targetId), RuntimeException::class, 'Site monitor target must have an integer key.');
 
-    (new RunSiteMonitorTargetJob($targetId))->failed(new RuntimeException('unexpected transport failure'));
+    $job = new RunSiteMonitorTargetJob($targetId);
+    $job->failed(new RuntimeException('unexpected transport failure'));
 
     $run = SiteMonitorRun::query()->sole();
 
@@ -90,3 +91,31 @@ function createDueSiteMonitorTarget(array $overrides = []): SiteMonitorTarget
         ...$overrides,
     ]);
 }
+
+it('refuses a direct queue request after a target was disabled elsewhere', function (): void {
+    Queue::fake();
+    $target = createDueSiteMonitorTarget();
+    SiteMonitorTarget::query()->whereKey($target->id)->update(['enabled' => false]);
+
+    expect(QueueSiteMonitorTargetCheckAction::run($target))->toBeFalse();
+    Queue::assertNothingPushed();
+});
+
+it('records an enabled queued check and ignores one disabled before worker execution', function (): void {
+    Queue::fake();
+    app()->instance(SiteMonitorHttpClient::class, new FakeSiteMonitorHttpClient(new SiteMonitorCheckResultData(SiteMonitorState::Passing, 200, 25, null, null, null)));
+    $target = createDueSiteMonitorTarget();
+    expect(QueueSiteMonitorTargetCheckAction::run($target))->toBeTrue();
+    Queue::assertPushed(RunSiteMonitorTargetJob::class, 1);
+    $job = new RunSiteMonitorTargetJob($target->id);
+    $job->handle();
+    expect($target->runs()->count())->toBe(1)
+        ->and($target->refresh()->current_state)->toBe(SiteMonitorState::Passing)
+        ->and($target->last_checked_at)->not->toBeNull();
+
+    $target->update(['enabled' => false]);
+    $job->handle();
+    $job->failed(new RuntimeException('Late failure callback'));
+    expect($target->runs()->count())->toBe(1)
+        ->and($target->refresh()->current_state)->toBe(SiteMonitorState::Passing);
+});

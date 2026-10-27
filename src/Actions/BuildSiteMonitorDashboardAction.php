@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Capell\SiteMonitor\Actions;
 
 use Capell\SiteMonitor\Data\SiteMonitorDashboardData;
+use Capell\SiteMonitor\Enums\SiteMonitorEvidenceStatus;
 use Capell\SiteMonitor\Enums\SiteMonitorIncidentStatus;
 use Capell\SiteMonitor\Enums\SiteMonitorState;
 use Capell\SiteMonitor\Models\SiteMonitorIncident;
 use Capell\SiteMonitor\Models\SiteMonitorRun;
 use Capell\SiteMonitor\Models\SiteMonitorTarget;
-use Carbon\CarbonImmutable;
 use Lorisleiva\Actions\Concerns\AsFake;
 use Lorisleiva\Actions\Concerns\AsObject;
 
@@ -24,10 +24,17 @@ final class BuildSiteMonitorDashboardAction
 
     public function handle(): SiteMonitorDashboardData
     {
-        $responseTimes = SiteMonitorRun::query()
-            ->whereNotNull('response_ms')
-            ->latest('checked_at')
-            ->limit(100)
+        // Mixed legacy wall times cannot be ordered in SQL. Keep only the most
+        // recent 100 instants in memory while streaming the retained run history.
+        $recentRuns = (new SiteMonitorRun)->newCollection();
+        foreach (SiteMonitorRun::query()->whereNotNull('response_ms')->cursor() as $run) {
+            $recentRuns->push($run);
+            $recentRuns = $recentRuns
+                ->sort(static fn (SiteMonitorRun $left, SiteMonitorRun $right): int => ($right->checked_at <=> $left->checked_at) ?: ($right->getKey() <=> $left->getKey()))
+                ->take(100);
+        }
+
+        $responseTimes = $recentRuns
             ->pluck('response_ms')
             ->map(static function (mixed $value): ?int {
                 if (is_int($value)) {
@@ -50,8 +57,23 @@ final class BuildSiteMonitorDashboardAction
 
         $oldestOpenIncidentAt = SiteMonitorIncident::query()
             ->where('status', SiteMonitorIncidentStatus::Open->value)
-            ->min('opened_at');
-        $latestCheckedAt = SiteMonitorTarget::query()->max('last_checked_at');
+            ->get()
+            ->map(static fn (SiteMonitorIncident $incident) => $incident->opened_at)
+            ->sort()
+            ->first();
+        $latestCheckedAt = SiteMonitorTarget::query()->get()
+            ->map(static fn (SiteMonitorTarget $target) => $target->last_checked_at)
+            ->filter()
+            ->sortDesc()
+            ->first();
+
+        $overdueTargets = 0;
+        $neverCheckedTargets = 0;
+        foreach (SiteMonitorTarget::query()->where('enabled', true)->cursor() as $target) {
+            $evidence = BuildSiteMonitorEvidenceAction::run($target);
+            $overdueTargets += $evidence->status === SiteMonitorEvidenceStatus::Overdue ? 1 : 0;
+            $neverCheckedTargets += $evidence->status === SiteMonitorEvidenceStatus::NeverChecked ? 1 : 0;
+        }
 
         return new SiteMonitorDashboardData(
             totalTargets: SiteMonitorTarget::query()->count(),
@@ -60,9 +82,11 @@ final class BuildSiteMonitorDashboardAction
             warningTargets: SiteMonitorTarget::query()->where('current_state', SiteMonitorState::Warning->value)->count(),
             failingTargets: SiteMonitorTarget::query()->where('current_state', SiteMonitorState::Failing->value)->count(),
             openIncidents: SiteMonitorIncident::query()->where('status', SiteMonitorIncidentStatus::Open->value)->count(),
-            oldestOpenIncidentAt: is_string($oldestOpenIncidentAt) ? CarbonImmutable::parse($oldestOpenIncidentAt) : null,
-            latestCheckedAt: is_string($latestCheckedAt) ? CarbonImmutable::parse($latestCheckedAt) : null,
+            oldestOpenIncidentAt: $oldestOpenIncidentAt,
+            latestCheckedAt: $latestCheckedAt,
             medianResponseMs: is_int($medianResponseMs) ? $medianResponseMs : null,
+            overdueTargets: $overdueTargets,
+            neverCheckedTargets: $neverCheckedTargets,
         );
     }
 }

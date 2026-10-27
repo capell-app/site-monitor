@@ -32,15 +32,12 @@ final class ResolveSiteMonitorTargetsAction
             ->where('enabled', true)
             ->when($siteId !== null, fn (Builder $query): Builder => $query->where('site_id', $siteId))
             ->when($targetId !== null, fn (Builder $query): Builder => $query->whereKey($targetId))
-            ->where(function (Builder $query): void {
-                $query
-                    ->whereNull('next_check_at')
-                    ->orWhere('next_check_at', '<=', CarbonImmutable::now());
-            })
-            ->oldest('next_check_at')
             ->orderBy('id')
-            ->limit($this->integerConfig('capell-site-monitor.batch_size', 50))
-            ->get();
+            ->get()
+            ->filter(static fn (SiteMonitorTarget $target): bool => $target->next_check_at === null || $target->next_check_at->lessThanOrEqualTo(CarbonImmutable::now('UTC')))
+            ->sort(static fn (SiteMonitorTarget $left, SiteMonitorTarget $right): int => ($left->next_check_at <=> $right->next_check_at) ?: ($left->getKey() <=> $right->getKey()))
+            ->take($this->integerConfig('capell-site-monitor.batch_size', 50))
+            ->values();
     }
 
     private function syncSiteDiscoveryTargets(): void

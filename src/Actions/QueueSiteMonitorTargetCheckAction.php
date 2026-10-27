@@ -15,10 +15,16 @@ final class QueueSiteMonitorTargetCheckAction
     use AsFake;
     use AsObject;
 
-    public function handle(SiteMonitorTarget $target): void
+    public function handle(SiteMonitorTarget $target): bool
     {
         $targetId = $target->getKey();
         throw_unless(is_int($targetId), RuntimeException::class, 'Site monitor target must have an integer key.');
-        RunSiteMonitorTargetJob::dispatch($targetId);
+        if (! SiteMonitorTarget::query()->whereKey($targetId)->where('enabled', true)->exists()) {
+            return false;
+        }
+
+        dispatch(new RunSiteMonitorTargetJob($targetId));
+
+        return true;
     }
 }

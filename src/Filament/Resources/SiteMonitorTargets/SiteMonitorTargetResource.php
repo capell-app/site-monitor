@@ -9,6 +9,8 @@ use Capell\Admin\Support\SiteScope;
 use Capell\Core\Facades\CapellCore;
 use Capell\Core\Models\Site;
 use Capell\Core\Support\Permissions\SiteAccess;
+use Capell\SiteMonitor\Actions\BuildSiteMonitorEvidenceAction;
+use Capell\SiteMonitor\Actions\OrderSiteMonitorTimestampsAction;
 use Capell\SiteMonitor\Actions\QueueSiteMonitorTargetCheckAction;
 use Capell\SiteMonitor\Enums\SiteMonitorCheckType;
 use Capell\SiteMonitor\Filament\Resources\SiteMonitorTargets\Pages\CreateSiteMonitorTarget;
@@ -25,6 +27,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\PageRegistration;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
@@ -32,6 +35,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Lang;
 use Override;
 
 final class SiteMonitorTargetResource extends Resource
@@ -47,18 +51,19 @@ final class SiteMonitorTargetResource extends Resource
     {
         return $schema->components([
             Section::make(__('capell-site-monitor::package.resources.targets'))
+                ->description(fn (?SiteMonitorTarget $record): ?string => $record instanceof SiteMonitorTarget && BuildSiteMonitorEvidenceAction::run($record)->invalidStatusRange ? Lang::string('capell-site-monitor::package.validation.repair_status_range') : null)
                 ->schema([
                     TextInput::make('name')->label(__('capell-site-monitor::package.fields.name'))->required()->maxLength(255),
                     TextInput::make('url')->label(__('capell-site-monitor::package.fields.url'))->url()->required()->maxLength(2048),
-                    Select::make('check_type')->label(__('capell-site-monitor::package.fields.check_type'))->options(self::checkTypeOptions())->required(),
+                    Select::make('check_type')->label(__('capell-site-monitor::package.fields.check_type'))->options(self::checkTypeOptions())->required()->live(),
                     Toggle::make('enabled')->label(__('capell-site-monitor::package.fields.enabled'))->default(true),
                     Select::make('site_id')->label(__('capell-site-monitor::package.fields.site_id'))->options(self::siteOptions(...))->searchable()->required(fn (): bool => ! SiteAccess::current()->isGlobal()),
                     TextInput::make('language_id')->label(__('capell-site-monitor::package.fields.language_id'))->numeric(),
                     TextInput::make('interval_minutes')->label(__('capell-site-monitor::package.fields.interval_minutes'))->numeric()->required()->minValue(1)->default(self::integerConfig('capell-site-monitor.default_interval_minutes', 5)),
                     TextInput::make('timeout_ms')->label(__('capell-site-monitor::package.fields.timeout_ms'))->numeric()->required()->minValue(100)->default(self::integerConfig('capell-site-monitor.default_timeout_ms', 5000)),
                     TextInput::make('failure_threshold')->label(__('capell-site-monitor::package.fields.failure_threshold'))->numeric()->required()->minValue(1)->default(self::integerConfig('capell-site-monitor.default_failure_threshold', 2)),
-                    TextInput::make('expected_status_minimum')->label(__('capell-site-monitor::package.fields.expected_status_minimum'))->numeric()->required()->minValue(100)->maxValue(599)->default(200),
-                    TextInput::make('expected_status_maximum')->label(__('capell-site-monitor::package.fields.expected_status_maximum'))->numeric()->required()->minValue(100)->maxValue(599)->default(399),
+                    TextInput::make('expected_status_minimum')->label(__('capell-site-monitor::package.fields.expected_status_minimum'))->numeric()->required()->minValue(100)->maxValue(599)->default(200)->visible(fn (Get $get): bool => $get('check_type') === SiteMonitorCheckType::HttpStatus->value),
+                    TextInput::make('expected_status_maximum')->label(__('capell-site-monitor::package.fields.expected_status_maximum'))->numeric()->required()->minValue(100)->maxValue(599)->default(399)->gte('expected_status_minimum')->validationMessages(['gte' => __('capell-site-monitor::package.validation.status_range')])->helperText(__('capell-site-monitor::package.validation.status_range'))->visible(fn (Get $get): bool => $get('check_type') === SiteMonitorCheckType::HttpStatus->value),
                     TextInput::make('source_package')->label(__('capell-site-monitor::package.fields.source_package'))->maxLength(255),
                     TextInput::make('source_key')->label(__('capell-site-monitor::package.fields.source_key'))->maxLength(255),
                     TextInput::make('route_name')->label(__('capell-site-monitor::package.fields.route_name'))->maxLength(255),
@@ -76,10 +81,11 @@ final class SiteMonitorTargetResource extends Resource
             TextColumn::make('url')->label(__('capell-site-monitor::package.fields.url'))->searchable()->limit(56)->copyable(),
             TextColumn::make('check_type')->label(__('capell-site-monitor::package.fields.check_type'))->badge()->sortable(),
             TextColumn::make('current_state')->label(__('capell-site-monitor::package.fields.current_state'))->badge()->sortable(),
+            TextColumn::make('evidence')->label(__('capell-site-monitor::package.fields.evidence'))->state(fn (SiteMonitorTarget $record): string => BuildSiteMonitorEvidenceAction::run($record)->label())->badge()->description(fn (SiteMonitorTarget $record): ?string => BuildSiteMonitorEvidenceAction::run($record)->guidance()),
             TextColumn::make('latestRun.response_ms')->label(__('capell-site-monitor::package.fields.response_ms'))->numeric()->suffix(' ms')->sortable(),
             TextColumn::make('consecutive_failures')->label(__('capell-site-monitor::package.fields.consecutive_failures'))->numeric()->sortable(),
-            TextColumn::make('last_checked_at')->label(__('capell-site-monitor::package.fields.last_checked_at'))->dateTime()->sortable(),
-            TextColumn::make('next_check_at')->label(__('capell-site-monitor::package.fields.next_check_at'))->dateTime()->sortable()->toggleable(),
+            TextColumn::make('last_checked_at')->label(__('capell-site-monitor::package.fields.last_checked_at'))->dateTime()->sortable(query: fn (Builder $query, string $direction): Builder => OrderSiteMonitorTimestampsAction::run($query, 'last_checked_at', $direction)),
+            TextColumn::make('next_check_at')->label(__('capell-site-monitor::package.fields.next_check_at'))->dateTime()->sortable(query: fn (Builder $query, string $direction): Builder => OrderSiteMonitorTimestampsAction::run($query, 'next_check_at', $direction))->toggleable(),
             IconColumn::make('enabled')->label(__('capell-site-monitor::package.fields.enabled'))->boolean()->sortable(),
         ])->recordActions([
             self::runNowAction(),
@@ -145,9 +151,18 @@ final class SiteMonitorTargetResource extends Resource
             ->label(__('capell-site-monitor::package.actions.run_now'))
             ->icon('heroicon-o-play')
             ->authorize(fn (SiteMonitorTarget $record): bool => Gate::allows('update', $record))
+            ->disabled(fn (SiteMonitorTarget $record): bool => ! $record->enabled)
+            ->tooltip(fn (SiteMonitorTarget $record): ?string => $record->enabled ? null : Lang::string('capell-site-monitor::package.actions.enable_before_running'))
             ->action(function (SiteMonitorTarget $record): void {
                 Gate::authorize('update', $record);
-                QueueSiteMonitorTargetCheckAction::run($record);
+                if (! QueueSiteMonitorTargetCheckAction::run($record)) {
+                    Notification::make('capell_site_monitor_target_check_not_queued')
+                        ->title(__('capell-site-monitor::package.actions.enable_before_running'))
+                        ->warning()
+                        ->send();
+
+                    return;
+                }
 
                 Notification::make('capell_site_monitor_target_check_queued')
                     ->title(__('capell-site-monitor::package.notifications.target_check_queued'))

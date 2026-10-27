@@ -58,7 +58,7 @@ final class PrepareSiteMonitorScreenshotAction
             $seenResponseMs = [];
             if ($existing instanceof SiteMonitorTarget) {
                 throw_unless(
-                    $existing->metadata === ['capture_seed' => self::CaptureSeed]
+                    array_diff_key($existing->metadata ?? [], ['_timestamp_instants' => true]) === ['capture_seed' => self::CaptureSeed]
                         && $existing->name === 'Screenshot homepage'
                         && $existing->url === 'https://screenshot.example.test'
                         && $existing->site_id === null && $existing->language_id === null,
@@ -68,7 +68,7 @@ final class PrepareSiteMonitorScreenshotAction
                 foreach (SiteMonitorRun::query()->where('target_id', $existing->getKey())->get() as $run) {
                     $sample = $samples[$run->response_ms] ?? null;
                     throw_unless(
-                        $run->metadata === ['capture_seed' => self::CaptureSeed]
+                        array_diff_key($run->metadata ?? [], ['_timestamp_instants' => true]) === ['capture_seed' => self::CaptureSeed]
                             && $sample !== null && $run->status_code === $sample[0] && $run->state === $sample[1]
                             && $run->error_type === null && $run->error_message === null && $run->redirect_chain === null
                             && ! in_array($run->response_ms, $seenResponseMs, true),
@@ -83,7 +83,7 @@ final class PrepareSiteMonitorScreenshotAction
                 foreach (SiteMonitorIncident::query()->where('target_id', $existing->getKey())->get() as $incident) {
                     $incidentCount++;
                     throw_unless(
-                        $incident->metadata === ['capture_seed' => self::CaptureSeed]
+                        array_diff_key($incident->metadata ?? [], ['_timestamp_instants' => true]) === ['capture_seed' => self::CaptureSeed]
                             && $incident->summary === 'Screenshot homepage returned a demo 503 response.'
                             && $incident->status === SiteMonitorIncidentStatus::Open
                             && $incident->severity === 'critical'

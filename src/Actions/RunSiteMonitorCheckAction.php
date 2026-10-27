@@ -24,6 +24,17 @@ final class RunSiteMonitorCheckAction
 
     public function handle(SiteMonitorTarget $target): SiteMonitorCheckResultData
     {
+        if ($target->check_type === SiteMonitorCheckType::HttpStatus && $target->expected_status_minimum > $target->expected_status_maximum) {
+            return new SiteMonitorCheckResultData(
+                state: SiteMonitorState::Unknown,
+                statusCode: null,
+                responseMs: null,
+                expiresAt: null,
+                errorType: 'invalid_status_range',
+                errorMessage: __('capell-site-monitor::package.validation.repair_status_range'),
+            );
+        }
+
         return match ($target->check_type) {
             SiteMonitorCheckType::HttpStatus => $this->checkHttpStatus($target),
             SiteMonitorCheckType::SslCertificate => $this->checkSslCertificate($target),
@@ -127,7 +138,7 @@ final class RunSiteMonitorCheckAction
 
     private function expiryResult(CarbonImmutable $expiresAt, int $warningDays): SiteMonitorCheckResultData
     {
-        $now = CarbonImmutable::now();
+        $now = CarbonImmutable::now('UTC');
 
         if ($expiresAt->lessThanOrEqualTo($now)) {
             return new SiteMonitorCheckResultData(

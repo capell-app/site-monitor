@@ -14,12 +14,25 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use InvalidArgumentException;
+use Override;
 use Throwable;
 
 final class LaravelSiteMonitorHttpClient implements SiteMonitorHttpClient
 {
+    #[Override]
     public function check(SiteMonitorTarget $target): SiteMonitorCheckResultData
     {
+        if ($target->expected_status_minimum > $target->expected_status_maximum) {
+            return new SiteMonitorCheckResultData(
+                state: SiteMonitorState::Unknown,
+                statusCode: null,
+                responseMs: null,
+                expiresAt: null,
+                errorType: 'invalid_status_range',
+                errorMessage: __('capell-site-monitor::package.validation.repair_status_range'),
+            );
+        }
+
         $startedAt = microtime(true);
         $url = $target->url;
         $redirectChain = [];
@@ -152,7 +165,7 @@ final class LaravelSiteMonitorHttpClient implements SiteMonitorHttpClient
         $currentPath = (string) (parse_url($currentUrl, PHP_URL_PATH) ?: '/');
         $basePath = rtrim(str_contains($currentPath, '/') ? dirname($currentPath) : '/', '/');
 
-        return sprintf('%s://%s%s/%s', $currentScheme, $authority, $basePath === '' ? '' : $basePath, $location);
+        return sprintf('%s://%s%s/%s', $currentScheme, $authority, $basePath, $location);
     }
 
     /**

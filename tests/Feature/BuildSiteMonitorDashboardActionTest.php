@@ -3,8 +3,10 @@
 declare(strict_types=1);
 
 use Capell\SiteMonitor\Actions\BuildSiteMonitorDashboardAction;
+use Capell\SiteMonitor\Actions\BuildSiteMonitorEvidenceAction;
 use Capell\SiteMonitor\Actions\Fixtures\PrepareSiteMonitorScreenshotAction;
 use Capell\SiteMonitor\Enums\SiteMonitorCheckType;
+use Capell\SiteMonitor\Enums\SiteMonitorEvidenceStatus;
 use Capell\SiteMonitor\Enums\SiteMonitorIncidentStatus;
 use Capell\SiteMonitor\Enums\SiteMonitorState;
 use Capell\SiteMonitor\Models\SiteMonitorIncident;
@@ -353,3 +355,52 @@ it('refuses unresolved physical paths before any fixture work', function (): voi
         putenv($fixture === false ? 'CAPELL_SCREENSHOT_FIXTURE' : 'CAPELL_SCREENSHOT_FIXTURE=' . $fixture);
     }
 });
+
+it('separates overdue and never checked evidence in a mixed portfolio without inventing failures', function (): void {
+    $this->travelTo(CarbonImmutable::parse('2026-10-22 12:00:00'));
+    createDashboardSiteMonitorTarget('Fresh', SiteMonitorState::Passing, ['last_checked_at' => now()->subMinutes(9)]);
+    createDashboardSiteMonitorTarget('Overdue', SiteMonitorState::Passing, ['last_checked_at' => now()->subMinutes(11)]);
+    createDashboardSiteMonitorTarget('Never', SiteMonitorState::Unknown);
+    createDashboardSiteMonitorTarget('Paused', SiteMonitorState::Passing, ['enabled' => false, 'last_checked_at' => now()->subDay()]);
+
+    $dashboard = BuildSiteMonitorDashboardAction::run();
+    expect($dashboard->toArray()['overdueTargets'] ?? null)->toBe(1)
+        ->and($dashboard->toArray()['neverCheckedTargets'] ?? null)->toBe(1)
+        ->and($dashboard->failingTargets)->toBe(0)
+        ->and(SiteMonitorRun::query()->count())->toBe(0)
+        ->and(SiteMonitorIncident::query()->count())->toBe(0);
+});
+
+it('uses each targets interval and grace boundary while keeping paused evidence distinct', function (): void {
+    $this->travelTo(CarbonImmutable::parse('2026-10-22 12:00:00'));
+    $target = createDashboardSiteMonitorTarget('Boundary', SiteMonitorState::Passing, ['last_checked_at' => now()->subMinutes(10)]);
+    expect(BuildSiteMonitorEvidenceAction::run($target)->status)->toBe(SiteMonitorEvidenceStatus::Fresh);
+    $this->travel(1)->seconds();
+    expect(BuildSiteMonitorEvidenceAction::run($target)->status)->toBe(SiteMonitorEvidenceStatus::Overdue);
+    $target->update(['interval_minutes' => 60]);
+    expect(BuildSiteMonitorEvidenceAction::run($target)->status)->toBe(SiteMonitorEvidenceStatus::Fresh);
+    $target->update(['enabled' => false]);
+    expect(BuildSiteMonitorEvidenceAction::run($target)->status)->toBe(SiteMonitorEvidenceStatus::Paused);
+    $target->update(['enabled' => true, 'last_checked_at' => null]);
+    expect(BuildSiteMonitorEvidenceAction::run($target)->status)->toBe(SiteMonitorEvidenceStatus::NeverChecked);
+});
+
+it('keeps elapsed freshness across the autumn clock change after database rehydration', function (string $timezone): void {
+    $originalTimezone = date_default_timezone_get();
+    config()->set('app.timezone', $timezone);
+    date_default_timezone_set($timezone);
+
+    try {
+        $this->travelTo(CarbonImmutable::parse('2026-10-25T00:55:00Z')->setTimezone($timezone));
+        $target = createDashboardSiteMonitorTarget('Clock change', SiteMonitorState::Passing, [
+            'last_checked_at' => CarbonImmutable::now(),
+        ]);
+        $this->travelTo(CarbonImmutable::parse('2026-10-25T01:06:00Z')->setTimezone($timezone));
+
+        expect(BuildSiteMonitorEvidenceAction::run($target->fresh())->status)->toBe(SiteMonitorEvidenceStatus::Overdue)
+            ->and(BuildSiteMonitorDashboardAction::run()->overdueTargets)->toBe(1);
+    } finally {
+        $this->travelBack();
+        date_default_timezone_set($originalTimezone);
+    }
+})->with(['UTC', 'Europe/London']);

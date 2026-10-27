@@ -5,9 +5,18 @@ declare(strict_types=1);
 use BezhanSalleh\FilamentShield\FilamentShieldServiceProvider;
 use Capell\Core\Models\Site;
 use Capell\SiteMonitor\Actions\AuthoriseSiteMonitorTargetSiteAction;
+use Capell\SiteMonitor\Actions\RecordSiteMonitorRunAction;
+use Capell\SiteMonitor\Actions\RunSiteMonitorCheckAction;
+use Capell\SiteMonitor\Actions\TransitionSiteMonitorIncidentAction;
+use Capell\SiteMonitor\Contracts\SiteMonitorHttpClient;
+use Capell\SiteMonitor\Data\SiteMonitorCheckResultData;
 use Capell\SiteMonitor\Enums\SiteMonitorCheckType;
+use Capell\SiteMonitor\Enums\SiteMonitorIncidentStatus;
 use Capell\SiteMonitor\Enums\SiteMonitorState;
+use Capell\SiteMonitor\Events\SiteMonitorIncidentManuallyTransitioned;
+use Capell\SiteMonitor\Events\SiteMonitorIncidentResolved;
 use Capell\SiteMonitor\Filament\Pages\SiteMonitorDashboardPage;
+use Capell\SiteMonitor\Filament\Resources\SiteMonitorIncidents\Pages\EditSiteMonitorIncident;
 use Capell\SiteMonitor\Filament\Resources\SiteMonitorIncidents\SiteMonitorIncidentResource;
 use Capell\SiteMonitor\Filament\Resources\SiteMonitorTargets\Pages\CreateSiteMonitorTarget;
 use Capell\SiteMonitor\Filament\Resources\SiteMonitorTargets\Pages\EditSiteMonitorTarget;
@@ -19,13 +28,19 @@ use Capell\SiteMonitor\Models\SiteMonitorTarget;
 use Capell\SiteMonitor\Policies\AbstractSiteMonitorResourcePolicy;
 use Capell\SiteMonitor\Policies\SiteMonitorIncidentPolicy;
 use Capell\SiteMonitor\Policies\SiteMonitorTargetPolicy;
+use Capell\SiteMonitor\Tests\Fixtures\FakeSiteMonitorHttpClient;
+use Filament\Actions\Action;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
+use Filament\Notifications\Notification;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Validation\ValidationException;
@@ -353,3 +368,277 @@ function siteMonitorPolicyPermission(string $ability, string $subject): string
         }
     })->permissionName();
 }
+
+it('explains why a paused target cannot run from the real table', function (): void {
+    Queue::fake();
+    $this->actingAs(siteMonitorPolicyActor([
+        siteMonitorPolicyPermission('view_any', 'SiteMonitorTarget'),
+        siteMonitorPolicyPermission('update', 'SiteMonitorTarget'),
+    ]));
+    Filament::setCurrentPanel(Filament::getPanel('admin'));
+    $target = siteMonitorResourceTarget(10);
+    $target->update(['enabled' => false]);
+
+    Livewire::test(ListSiteMonitorTargets::class)
+        ->assertActionDisabled(TestAction::make('run_now')->table($target))
+        ->assertSee(__('capell-site-monitor::package.actions.enable_before_running'));
+    Queue::assertNothingPushed();
+});
+
+it('does not let the generic incident form bypass an explicit status transition', function (): void {
+    $this->actingAs(siteMonitorPolicyActor([
+        siteMonitorPolicyPermission('view_any', 'SiteMonitorIncident'),
+        siteMonitorPolicyPermission('update', 'SiteMonitorIncident'),
+    ]));
+    Filament::setCurrentPanel(Filament::getPanel('admin'));
+    $target = siteMonitorResourceTarget(10);
+    $incident = SiteMonitorIncident::query()->create([
+        'target_id' => $target->id, 'status' => 'open', 'opened_at' => now(),
+        'severity' => 'critical', 'summary' => 'Service failure', 'failure_count' => 2,
+    ]);
+
+    Livewire::test(EditSiteMonitorIncident::class, ['record' => $incident->id])
+        ->fillForm(['status' => 'resolved'])->call('save')->assertHasNoFormErrors();
+
+    expect($incident->refresh()->status)->toBe(SiteMonitorIncidentStatus::Open)
+        ->and($incident->resolved_at)->toBeNull();
+});
+
+it('rejects contradictory HTTP ranges through the real target forms without saving', function (bool $editing): void {
+    $site = Site::factory()->create();
+    $this->actingAs(siteMonitorPolicyActor([
+        siteMonitorPolicyPermission('view_any', 'SiteMonitorTarget'),
+        siteMonitorPolicyPermission('create', 'SiteMonitorTarget'),
+        siteMonitorPolicyPermission('update', 'SiteMonitorTarget'),
+    ], collect([(int) $site->getKey()])));
+    Filament::setCurrentPanel(Filament::getPanel('admin'));
+    $target = $editing ? siteMonitorResourceTarget((int) $site->getKey()) : null;
+    $component = $editing
+        ? Livewire::test(EditSiteMonitorTarget::class, ['record' => $target?->id])
+        : Livewire::test(CreateSiteMonitorTarget::class);
+    $component->fillForm([
+        'name' => 'Impossible range', 'url' => 'https://93.184.216.34',
+        'check_type' => SiteMonitorCheckType::HttpStatus->value, 'site_id' => $site->id,
+        'interval_minutes' => 5, 'timeout_ms' => 5000, 'failure_threshold' => 2,
+        'expected_status_minimum' => 500, 'expected_status_maximum' => 200,
+    ])->call($editing ? 'save' : 'create')->assertHasFormErrors(['expected_status_maximum']);
+
+    expect(SiteMonitorTarget::query()->count())->toBe($editing ? 1 : 0);
+    if ($target instanceof SiteMonitorTarget) {
+        expect($target->refresh()->expected_status_minimum)->toBe(200)
+            ->and($target->expected_status_maximum)->toBe(399);
+    }
+})->with(['create' => [false], 'edit' => [true]]);
+
+it('records manual resolve and reopen decisions through the real incident actions', function (): void {
+    Event::fake([SiteMonitorIncidentManuallyTransitioned::class, SiteMonitorIncidentResolved::class]);
+    $this->travelTo(now()->startOfSecond());
+    $this->actingAs(siteMonitorPolicyActor([
+        siteMonitorPolicyPermission('view_any', 'SiteMonitorIncident'),
+        siteMonitorPolicyPermission('update', 'SiteMonitorIncident'),
+    ]));
+    Filament::setCurrentPanel(Filament::getPanel('admin'));
+    $target = siteMonitorResourceTarget(10);
+    $target->update(['failure_threshold' => 1]);
+
+    $failure = new SiteMonitorCheckResultData(SiteMonitorState::Failing, 503, 20, null, 'unexpected_status_code', 'HTTP 503');
+    RecordSiteMonitorRunAction::run($target, $failure);
+    $incident = $target->openIncident()->firstOrFail();
+    $runId = $incident->latest_run_id;
+    $page = Livewire::test(EditSiteMonitorIncident::class, ['record' => $incident->id]);
+    $page->callAction('resolve', ['reason' => 'Accepted maintenance'])->assertHasNoActionErrors();
+
+    expect($incident->refresh()->status)->toBe(SiteMonitorIncidentStatus::Resolved)
+        ->and($incident->resolved_at?->equalTo(now()))->toBeTrue()
+        ->and($incident->latest_run_id)->toBe($runId)
+        ->and($target->refresh()->current_state)->toBe(SiteMonitorState::Failing)
+        ->and(data_get($incident->metadata, 'operator_transitions.0.actorId'))->toBe('1')
+        ->and(data_get($incident->metadata, 'operator_transitions.0.reason'))->toBe('Accepted maintenance');
+    TransitionSiteMonitorIncidentAction::run($incident, SiteMonitorIncidentStatus::Resolved, 'Repeated request');
+    Event::assertDispatchedTimes(SiteMonitorIncidentManuallyTransitioned::class, 1);
+    Event::assertDispatched(SiteMonitorIncidentManuallyTransitioned::class, fn (SiteMonitorIncidentManuallyTransitioned $event): bool => $event->transition->fromStatus === SiteMonitorIncidentStatus::Open
+        && $event->transition->toStatus === SiteMonitorIncidentStatus::Resolved
+        && $event->transition->actorId === '1'
+        && $event->transition->reason === 'Accepted maintenance'
+        && $event->transition->occurredAt->equalTo(now()));
+    Event::assertNotDispatched(SiteMonitorIncidentResolved::class);
+
+    $page->callAction('reopen', ['reason' => 'Maintenance ended'])->assertHasNoActionErrors();
+    expect($incident->refresh()->status)->toBe(SiteMonitorIncidentStatus::Open)
+        ->and($incident->resolved_at)->toBeNull()
+        ->and(data_get($incident->metadata, 'operator_transitions'))->toHaveCount(2);
+    RecordSiteMonitorRunAction::run($target->refresh(), $failure);
+    expect(data_get($incident->refresh()->metadata, 'operator_transitions'))->toHaveCount(2);
+    RecordSiteMonitorRunAction::run($target->refresh(), new SiteMonitorCheckResultData(SiteMonitorState::Passing, 200, 20, null, null, null));
+    expect($incident->refresh()->status)->toBe(SiteMonitorIncidentStatus::Resolved)
+        ->and($incident->resolved_at)->not->toBeNull();
+    Event::assertDispatchedTimes(SiteMonitorIncidentManuallyTransitioned::class, 2);
+    Event::assertDispatched(SiteMonitorIncidentResolved::class, fn (SiteMonitorIncidentResolved $event): bool => $event->run->state === SiteMonitorState::Passing);
+});
+
+it('starts a new incident on a failing probe after manual closure and prevents a second open incident', function (): void {
+    $this->actingAs(siteMonitorPolicyActor([siteMonitorPolicyPermission('update', 'SiteMonitorIncident')]));
+    $target = siteMonitorResourceTarget(10);
+    $target->update(['failure_threshold' => 1]);
+
+    $failure = new SiteMonitorCheckResultData(SiteMonitorState::Failing, 503, 20, null, null, null);
+    RecordSiteMonitorRunAction::run($target, $failure);
+    $original = $target->openIncident()->firstOrFail();
+    TransitionSiteMonitorIncidentAction::run($original, SiteMonitorIncidentStatus::Resolved, 'Operator closure');
+    RecordSiteMonitorRunAction::run($target->refresh(), $failure);
+
+    expect($target->incidents()->count())->toBe(2)
+        ->and($target->openIncident()->firstOrFail()->is($original))->toBeFalse();
+    expect(fn (): mixed => TransitionSiteMonitorIncidentAction::run($original, SiteMonitorIncidentStatus::Open, 'Reopen old incident'))->toThrow(ValidationException::class);
+    expect($original->refresh()->status)->toBe(SiteMonitorIncidentStatus::Resolved);
+});
+
+it('denies manual transitions for view only or foreign actors without changing evidence', function (bool $foreign): void {
+    Event::fake([SiteMonitorIncidentManuallyTransitioned::class]);
+    $this->actingAs(siteMonitorPolicyActor([
+        siteMonitorPolicyPermission('view_any', 'SiteMonitorIncident'),
+        ...($foreign ? [siteMonitorPolicyPermission('update', 'SiteMonitorIncident')] : []),
+    ]));
+    $target = siteMonitorResourceTarget($foreign ? 20 : 10);
+    $incident = SiteMonitorIncident::query()->create([
+        'target_id' => $target->id, 'status' => 'open', 'opened_at' => now(),
+        'severity' => 'critical', 'summary' => 'Unavailable', 'failure_count' => 1,
+    ]);
+    expect(fn (): mixed => TransitionSiteMonitorIncidentAction::run($incident, SiteMonitorIncidentStatus::Resolved, 'Forged request'))->toThrow(AuthorizationException::class);
+    expect($incident->refresh()->status)->toBe(SiteMonitorIncidentStatus::Open)
+        ->and($incident->resolved_at)->toBeNull();
+    Event::assertNotDispatched(SiteMonitorIncidentManuallyTransitioned::class);
+    Filament::setCurrentPanel(Filament::getPanel('admin'));
+    if (! $foreign) {
+        Livewire::test(EditSiteMonitorIncident::class, ['record' => $incident->id])->assertForbidden();
+    }
+})->with(['view only' => [false], 'foreign site' => [true]]);
+
+it('saves valid HTTP ranges through the forms and classifies their real fake HTTP results', function (bool $editing, int $maximum): void {
+    $site = Site::factory()->create();
+    $this->actingAs(siteMonitorPolicyActor([
+        siteMonitorPolicyPermission('view_any', 'SiteMonitorTarget'),
+        siteMonitorPolicyPermission('create', 'SiteMonitorTarget'),
+        siteMonitorPolicyPermission('update', 'SiteMonitorTarget'),
+    ], collect([(int) $site->id])));
+    Filament::setCurrentPanel(Filament::getPanel('admin'));
+    $target = $editing ? siteMonitorResourceTarget((int) $site->id) : null;
+    $component = $editing
+        ? Livewire::test(EditSiteMonitorTarget::class, ['record' => $target?->id])
+        : Livewire::test(CreateSiteMonitorTarget::class);
+    $component->fillForm([
+        'name' => 'Valid range', 'url' => 'https://93.184.216.34', 'site_id' => $site->id,
+        'check_type' => SiteMonitorCheckType::HttpStatus->value,
+        'expected_status_minimum' => 200, 'expected_status_maximum' => $maximum,
+    ])->call($editing ? 'save' : 'create')->assertHasNoFormErrors();
+    $target = SiteMonitorTarget::query()->sole();
+    foreach ([200, $maximum, $maximum + 1, 199] as $status) {
+        app()->instance(SiteMonitorHttpClient::class, new FakeSiteMonitorHttpClient(new SiteMonitorCheckResultData(SiteMonitorState::Passing, $status, 20, null, null, null)));
+        expect(RunSiteMonitorCheckAction::run($target)->state)->toBe($status >= 200 && $status <= $maximum ? SiteMonitorState::Passing : SiteMonitorState::Failing);
+    }
+})->with(['create equal' => [false, 200], 'create range' => [false, 399], 'edit equal' => [true, 200], 'edit range' => [true, 399]]);
+
+it('enforces status ranges for model writers and exposes legacy repair guidance without rewriting values', function (): void {
+    expect(fn (): SiteMonitorTarget => SiteMonitorTarget::query()->create([
+        'name' => 'Invalid non-admin target', 'url' => 'https://93.184.216.34',
+        'check_type' => SiteMonitorCheckType::HttpStatus,
+        'expected_status_minimum' => 500, 'expected_status_maximum' => 200,
+    ]))->toThrow(ValidationException::class);
+    expect(SiteMonitorTarget::query()->count())->toBe(0);
+
+    $target = siteMonitorResourceTarget(10);
+    expect(fn () => $target->update(['expected_status_minimum' => 500, 'expected_status_maximum' => 200]))->toThrow(ValidationException::class);
+    expect($target->refresh()->expected_status_minimum)->toBe(200);
+    DB::table('site_monitor_targets')->where('id', $target->id)->update(['expected_status_minimum' => 500, 'expected_status_maximum' => 200]);
+    $this->actingAs(siteMonitorPolicyActor([
+        siteMonitorPolicyPermission('view_any', 'SiteMonitorTarget'),
+        siteMonitorPolicyPermission('update', 'SiteMonitorTarget'),
+    ]));
+    Filament::setCurrentPanel(Filament::getPanel('admin'));
+    Livewire::test(ListSiteMonitorTargets::class)->assertSee(__('capell-site-monitor::package.validation.repair_status_range'));
+    expect($target->refresh()->expected_status_minimum)->toBe(500);
+});
+
+it('gives honest feedback when a mounted run action becomes stale before submission', function (): void {
+    Queue::fake();
+    $this->actingAs(siteMonitorPolicyActor([
+        siteMonitorPolicyPermission('view_any', 'SiteMonitorTarget'),
+        siteMonitorPolicyPermission('update', 'SiteMonitorTarget'),
+    ]));
+    Filament::setCurrentPanel(Filament::getPanel('admin'));
+    $target = siteMonitorResourceTarget(10);
+    $component = Livewire::test(ListSiteMonitorTargets::class);
+    $instance = $component->instance();
+    throw_unless($instance instanceof ListSiteMonitorTargets, RuntimeException::class, 'Target table component missing.');
+    $action = $instance->getTable()->getAction('run_now');
+    throw_unless($action instanceof Action, RuntimeException::class, 'Run now action missing.');
+    $action->record($target);
+    SiteMonitorTarget::query()->whereKey($target->id)->update(['enabled' => false]);
+    $action->call();
+    Notification::assertNotified(
+        Notification::make()->title(__('capell-site-monitor::package.actions.enable_before_running'))->warning(),
+    );
+    Queue::assertNothingPushed();
+});
+
+it('shows stale observation guidance beside the retained passing result in the real target table', function (): void {
+    $this->travelTo(now()->startOfSecond());
+    $this->actingAs(siteMonitorPolicyActor([siteMonitorPolicyPermission('view_any', 'SiteMonitorTarget')]));
+    Filament::setCurrentPanel(Filament::getPanel('admin'));
+    $target = siteMonitorResourceTarget(10);
+    $target->update(['current_state' => SiteMonitorState::Passing, 'last_checked_at' => now()->subMinutes(11)]);
+    Livewire::test(ListSiteMonitorTargets::class)
+        ->assertTableColumnStateSet('evidence', __('capell-site-monitor::package.evidence.overdue'), $target)
+        ->assertSee(__('capell-site-monitor::package.evidence.guidance'))
+        ->assertSee(__('capell-site-monitor::package.fields.current_state'));
+    expect($target->refresh()->current_state)->toBe(SiteMonitorState::Passing);
+});
+
+it('retains HTTP bounds when switching to an expiry check and back through the real form', function (): void {
+    $site = Site::factory()->create();
+    $this->actingAs(siteMonitorPolicyActor([
+        siteMonitorPolicyPermission('view_any', 'SiteMonitorTarget'),
+        siteMonitorPolicyPermission('update', 'SiteMonitorTarget'),
+    ], collect([(int) $site->id])));
+    Filament::setCurrentPanel(Filament::getPanel('admin'));
+    $target = siteMonitorResourceTarget((int) $site->id);
+    $target->update(['expected_status_minimum' => 204, 'expected_status_maximum' => 204]);
+    Livewire::test(EditSiteMonitorTarget::class, ['record' => $target->id])
+        ->fillForm(['check_type' => SiteMonitorCheckType::SslCertificate->value])
+        ->call('save')->assertHasNoFormErrors();
+    expect($target->refresh()->expected_status_minimum)->toBe(204)
+        ->and($target->expected_status_maximum)->toBe(204);
+    Livewire::test(EditSiteMonitorTarget::class, ['record' => $target->id])
+        ->fillForm(['check_type' => SiteMonitorCheckType::HttpStatus->value])
+        ->call('save')->assertHasNoFormErrors();
+    expect($target->refresh()->expected_status_minimum)->toBe(204)
+        ->and($target->expected_status_maximum)->toBe(204);
+});
+
+it('renders dashboard observation guidance and enabled evidence counters for an owner', function (): void {
+    $actor = new class extends User
+    {
+        /** @use HasFactory<Factory<static>> */
+        use HasFactory;
+
+        public function isGlobalAdmin(): bool
+        {
+            return true;
+        }
+    };
+    $this->actingAs($actor);
+    Filament::setCurrentPanel(Filament::getPanel('admin'));
+    $target = siteMonitorResourceTarget(10);
+    $target->update(['last_checked_at' => now()->subMinutes(11), 'current_state' => SiteMonitorState::Passing]);
+
+    $component = Livewire::test(SiteMonitorDashboardPage::class)
+        ->assertSuccessful()
+        ->assertSeeHtml('data-site-monitor-evidence-guidance')
+        ->assertSee(__('capell-site-monitor::package.evidence.policy'))
+        ->assertSee(__('capell-site-monitor::package.evidence.guidance'))
+        ->assertSee(__('capell-site-monitor::package.dashboard.overdue_targets'));
+    $instance = $component->instance();
+    throw_unless($instance instanceof SiteMonitorDashboardPage, RuntimeException::class, 'Dashboard component missing.');
+    expect($instance->dashboard()->overdueTargets)->toBe(1)
+        ->and($instance->dashboard()->neverCheckedTargets)->toBe(0);
+});

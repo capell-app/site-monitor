@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Capell\SiteMonitor\Models;
 
 use Capell\SiteMonitor\Enums\SiteMonitorIncidentStatus;
+use Capell\SiteMonitor\Models\Concerns\RetainsTimestampInstants;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -29,6 +30,8 @@ final class SiteMonitorIncident extends Model
 {
     /** @use HasFactory<Factory<static>> */
     use HasFactory;
+
+    use RetainsTimestampInstants;
 
     /**
      * @var list<string>

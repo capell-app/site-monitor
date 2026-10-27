@@ -7,11 +7,15 @@
             __('capell-site-monitor::package.dashboard.passing_targets') => number_format($dashboard->passingTargets),
             __('capell-site-monitor::package.dashboard.warning_targets') => number_format($dashboard->warningTargets),
             __('capell-site-monitor::package.dashboard.failing_targets') => number_format($dashboard->failingTargets),
+            __('capell-site-monitor::package.dashboard.overdue_targets') => number_format($dashboard->overdueTargets),
+            __('capell-site-monitor::package.dashboard.never_checked_targets') => number_format($dashboard->neverCheckedTargets),
             __('capell-site-monitor::package.dashboard.open_incidents') => number_format($dashboard->openIncidents),
         ];
     @endphp
 
-    <div class="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+    <p data-site-monitor-evidence-guidance>{{ __('capell-site-monitor::package.evidence.policy') }} {{ __('capell-site-monitor::package.evidence.guidance') }}</p>
+
+    <div class="grid gap-4 md:grid-cols-3 xl:grid-cols-4">
         @foreach ($stats as $label => $value)
             <div
                 class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900"

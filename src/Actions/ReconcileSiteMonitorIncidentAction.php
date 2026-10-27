@@ -12,6 +12,7 @@ use Capell\SiteMonitor\Models\SiteMonitorIncident;
 use Capell\SiteMonitor\Models\SiteMonitorRun;
 use Capell\SiteMonitor\Models\SiteMonitorTarget;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
 use Lorisleiva\Actions\Concerns\AsFake;
 use Lorisleiva\Actions\Concerns\AsObject;
 
@@ -46,6 +47,7 @@ final class ReconcileSiteMonitorIncidentAction
                 'failure_count' => max((int) $incident->failure_count + 1, (int) $target->consecutive_failures),
                 'last_failure_at' => $run->checked_at,
                 'metadata' => [
+                    ...($incident->metadata ?? []),
                     'last_error_type' => $run->error_type,
                     'last_status_code' => $run->status_code,
                 ],
@@ -61,7 +63,7 @@ final class ReconcileSiteMonitorIncidentAction
             'severity' => 'critical',
             'summary' => sprintf('%s is failing', $target->name),
             'failure_count' => max(1, (int) $target->consecutive_failures),
-            'opened_at' => CarbonImmutable::now(),
+            'opened_at' => CarbonImmutable::now('UTC'),
             'last_failure_at' => $run->checked_at,
             'metadata' => [
                 'last_error_type' => $run->error_type,
@@ -69,7 +71,7 @@ final class ReconcileSiteMonitorIncidentAction
             ],
         ]);
 
-        SiteMonitorIncidentOpened::dispatch($incident, $target, $run);
+        DB::afterCommit(static fn () => event(new SiteMonitorIncidentOpened($incident, $target, $run)));
 
         return $incident;
     }
@@ -85,9 +87,9 @@ final class ReconcileSiteMonitorIncidentAction
         $incident->forceFill([
             'latest_run_id' => $run->getKey(),
             'status' => SiteMonitorIncidentStatus::Resolved,
-            'resolved_at' => CarbonImmutable::now(),
+            'resolved_at' => CarbonImmutable::now('UTC'),
         ])->save();
 
-        SiteMonitorIncidentResolved::dispatch($incident, $target, $run);
+        DB::afterCommit(static fn () => event(new SiteMonitorIncidentResolved($incident, $target, $run)));
     }
 }

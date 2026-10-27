@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Capell\SiteMonitor\Models;
 
+use Capell\SiteMonitor\Actions\ValidateSiteMonitorStatusRangeAction;
 use Capell\SiteMonitor\Enums\SiteMonitorCheckType;
 use Capell\SiteMonitor\Enums\SiteMonitorIncidentStatus;
 use Capell\SiteMonitor\Enums\SiteMonitorState;
+use Capell\SiteMonitor\Models\Concerns\RetainsTimestampInstants;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -41,6 +43,8 @@ final class SiteMonitorTarget extends Model
 {
     /** @use HasFactory<Factory<static>> */
     use HasFactory;
+
+    use RetainsTimestampInstants;
 
     /**
      * @var list<string>
@@ -80,7 +84,9 @@ final class SiteMonitorTarget extends Model
      */
     public function latestRun(): HasOne
     {
-        return $this->hasOne(SiteMonitorRun::class, 'target_id')->latestOfMany('checked_at');
+        // Latest recorded evidence uses the same monotonic identity as retention;
+        // wall-clock ordering reverses when daylight saving ends.
+        return $this->hasOne(SiteMonitorRun::class, 'target_id')->latestOfMany('id');
     }
 
     /**
@@ -98,6 +104,16 @@ final class SiteMonitorTarget extends Model
     {
         return $this->hasOne(SiteMonitorIncident::class, 'target_id')
             ->where('status', SiteMonitorIncidentStatus::Open->value);
+    }
+
+    #[Override]
+    protected static function booted(): void
+    {
+        self::saving(static function (self $target): void {
+            if (! $target->exists || $target->isDirty(['expected_status_minimum', 'expected_status_maximum', 'check_type'])) {
+                ValidateSiteMonitorStatusRangeAction::run($target);
+            }
+        });
     }
 
     /**

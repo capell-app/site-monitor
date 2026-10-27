@@ -16,6 +16,7 @@ use Capell\SiteMonitor\Tests\Fixtures\FakeSiteMonitorHttpClient;
 use Carbon\CarbonImmutable;
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 it('disables automatic RDAP redirects so an endpoint cannot bypass the outbound guard', function (): void {
@@ -229,3 +230,16 @@ function siteMonitorTarget(SiteMonitorCheckType $checkType, array $overrides = [
         ...$overrides,
     ]);
 }
+
+it('reports a legacy contradictory range as unknown configuration rather than an outage', function (): void {
+    Http::preventStrayRequests();
+    app()->instance(SiteMonitorHttpClient::class, new FakeSiteMonitorHttpClient(new SiteMonitorCheckResultData(SiteMonitorState::Passing, 200, 20, null, null, null)));
+    $target = siteMonitorTarget(SiteMonitorCheckType::HttpStatus);
+    DB::table('site_monitor_targets')->where('id', $target->id)->update(['expected_status_minimum' => 500, 'expected_status_maximum' => 200]);
+    $target->refresh();
+    $result = RunSiteMonitorCheckAction::run($target);
+    expect($result->state)->toBe(SiteMonitorState::Unknown)
+        ->and($result->errorType)->toBe('invalid_status_range')
+        ->and($result->errorMessage)->toBe(__('capell-site-monitor::package.validation.repair_status_range'));
+    Http::assertNothingSent();
+});

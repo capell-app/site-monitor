@@ -11,7 +11,6 @@ use Capell\SiteMonitor\Enums\SiteMonitorIncidentStatus;
 use Capell\SiteMonitor\Models\SiteMonitorIncident;
 use Capell\SiteMonitor\Models\SiteMonitorTarget;
 use Carbon\CarbonImmutable;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
@@ -83,6 +82,7 @@ final class SiteMonitorHealthCheck implements ChecksExtensionHealth
             remediation: $missingTables === []
                 ? null
                 : (string) __('capell-site-monitor::package.health.storage.remediation'),
+            id: 'legacy.site.monitor.storage',
         );
     }
 
@@ -97,6 +97,7 @@ final class SiteMonitorHealthCheck implements ChecksExtensionHealth
                 ? (string) __('capell-site-monitor::package.health.command.passed')
                 : (string) __('capell-site-monitor::package.health.command.failed'),
             remediation: $available ? null : (string) __('capell-site-monitor::package.health.command.remediation'),
+            id: 'legacy.site.monitor.command',
         );
     }
 
@@ -121,6 +122,7 @@ final class SiteMonitorHealthCheck implements ChecksExtensionHealth
             remediation: $staleTargets === 0
                 ? null
                 : (string) __('capell-site-monitor::package.health.target_freshness.remediation'),
+            id: 'legacy.site.monitor.freshness',
         );
     }
 
@@ -139,25 +141,23 @@ final class SiteMonitorHealthCheck implements ChecksExtensionHealth
             passed: $count === 0,
             message: $count === 0
                 ? (string) __('capell-site-monitor::package.health.incidents.passed')
-                : (string) trans_choice('capell-site-monitor::package.health.incidents.failed', $count, ['count' => $count]),
+                : trans_choice('capell-site-monitor::package.health.incidents.failed', $count, ['count' => $count]),
             remediation: $count === 0
                 ? null
                 : (string) __('capell-site-monitor::package.health.incidents.remediation'),
+            id: 'legacy.site.monitor.incidents',
         );
     }
 
     private function staleTargetCount(): int
     {
-        $cutoff = CarbonImmutable::now()
-            ->subMinutes($this->integerConfig('capell-site-monitor.max_stale_minutes', 30));
+        $now = CarbonImmutable::now('UTC');
+        $cutoff = $now->subMinutes($this->integerConfig('capell-site-monitor.max_stale_minutes', 30));
 
         return SiteMonitorTarget::query()
             ->where('enabled', true)
-            ->where(function (Builder $query) use ($cutoff): void {
-                $query
-                    ->whereNull('last_checked_at')
-                    ->orWhere('last_checked_at', '<', $cutoff);
-            })
+            ->get()
+            ->filter(static fn (SiteMonitorTarget $target): bool => $target->last_checked_at === null || $target->last_checked_at->lessThan($cutoff) || $target->last_checked_at->greaterThan($now))
             ->count();
     }
 

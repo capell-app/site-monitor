@@ -7,18 +7,19 @@ namespace Capell\SiteMonitor\Filament\Resources\SiteMonitorIncidents;
 use BackedEnum;
 use Capell\Admin\Support\SiteScope;
 use Capell\Core\Facades\CapellCore;
+use Capell\SiteMonitor\Actions\OrderSiteMonitorTimestampsAction;
 use Capell\SiteMonitor\Enums\SiteMonitorIncidentStatus;
 use Capell\SiteMonitor\Filament\Resources\SiteMonitorIncidents\Pages\EditSiteMonitorIncident;
 use Capell\SiteMonitor\Filament\Resources\SiteMonitorIncidents\Pages\ListSiteMonitorIncidents;
 use Capell\SiteMonitor\Models\SiteMonitorIncident;
 use Capell\SiteMonitor\Providers\SiteMonitorServiceProvider;
-use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Pages\PageRegistration;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Text;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -40,11 +41,12 @@ final class SiteMonitorIncidentResource extends Resource
         return $schema->components([
             Section::make(__('capell-site-monitor::package.resources.incidents'))
                 ->schema([
-                    Select::make('status')->label(__('capell-site-monitor::package.fields.status'))->options(self::statusOptions())->required(),
+                    Select::make('status')->label(__('capell-site-monitor::package.fields.status'))->options(self::statusOptions())->disabled()->dehydrated(false),
                     TextInput::make('severity')->label(__('capell-site-monitor::package.fields.severity'))->required()->maxLength(120),
                     Textarea::make('summary')->label(__('capell-site-monitor::package.fields.summary'))->required()->rows(3)->columnSpanFull(),
-                    TextInput::make('failure_count')->label(__('capell-site-monitor::package.fields.failure_count'))->numeric()->required()->minValue(1),
-                    KeyValue::make('metadata')->label(__('capell-site-monitor::package.fields.metadata'))->columnSpanFull(),
+                    TextInput::make('failure_count')->label(__('capell-site-monitor::package.fields.failure_count'))->numeric()->disabled()->dehydrated(false),
+                    Text::make(fn (SiteMonitorIncident $record): string => self::operatorHistory($record))->columnSpanFull(),
+                    Text::make(__('capell-site-monitor::package.actions.manual_transition_help'))->columnSpanFull(),
                 ])
                 ->columns(2),
         ]);
@@ -59,9 +61,9 @@ final class SiteMonitorIncidentResource extends Resource
             TextColumn::make('severity')->label(__('capell-site-monitor::package.fields.severity'))->badge()->sortable(),
             TextColumn::make('summary')->label(__('capell-site-monitor::package.fields.summary'))->searchable()->limit(80),
             TextColumn::make('failure_count')->label(__('capell-site-monitor::package.fields.failure_count'))->numeric()->sortable(),
-            TextColumn::make('opened_at')->label(__('capell-site-monitor::package.fields.opened_at'))->dateTime()->sortable(),
-            TextColumn::make('last_failure_at')->label(__('capell-site-monitor::package.fields.last_failure_at'))->dateTime()->sortable()->toggleable(),
-            TextColumn::make('resolved_at')->label(__('capell-site-monitor::package.fields.resolved_at'))->dateTime()->sortable()->toggleable(),
+            TextColumn::make('opened_at')->label(__('capell-site-monitor::package.fields.opened_at'))->dateTime()->sortable(query: fn (Builder $query, string $direction): Builder => OrderSiteMonitorTimestampsAction::run($query, 'opened_at', $direction)),
+            TextColumn::make('last_failure_at')->label(__('capell-site-monitor::package.fields.last_failure_at'))->dateTime()->sortable(query: fn (Builder $query, string $direction): Builder => OrderSiteMonitorTimestampsAction::run($query, 'last_failure_at', $direction))->toggleable(),
+            TextColumn::make('resolved_at')->label(__('capell-site-monitor::package.fields.resolved_at'))->dateTime()->sortable(query: fn (Builder $query, string $direction): Builder => OrderSiteMonitorTimestampsAction::run($query, 'resolved_at', $direction))->toggleable(),
         ]);
     }
 
@@ -107,6 +109,27 @@ final class SiteMonitorIncidentResource extends Resource
             'index' => ListSiteMonitorIncidents::route('/'),
             'edit' => EditSiteMonitorIncident::route('/{record}/edit'),
         ];
+    }
+
+    private static function operatorHistory(SiteMonitorIncident $record): string
+    {
+        $history = $record->metadata['operator_transitions'] ?? [];
+        if (! is_array($history) || $history === []) {
+            return __('capell-site-monitor::package.incident_history.empty');
+        }
+
+        return collect($history)->map(static function (mixed $entry): string {
+            if (! is_array($entry)) {
+                return '';
+            }
+
+            return __('capell-site-monitor::package.incident_history.entry', [
+                'actor' => is_string($entry['actorId'] ?? null) ? $entry['actorId'] : '',
+                'status' => is_string($entry['toStatus'] ?? null) ? __('capell-site-monitor::package.incident_statuses.' . $entry['toStatus']) : '',
+                'at' => is_string($entry['occurredAt'] ?? null) ? $entry['occurredAt'] : '',
+                'reason' => is_string($entry['reason'] ?? null) ? $entry['reason'] : '',
+            ]);
+        })->implode(' | ');
     }
 
     /**

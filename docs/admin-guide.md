@@ -12,25 +12,27 @@ Keep independent monitoring for the application host itself. Site Monitor cannot
 
 ## Add A Target
 
-Open **Monitoring > Site Monitor targets** in admin with a global operator account. Create a target with a meaningful name and public HTTP or HTTPS URL. Site-scoped access does not grant global monitoring control.
+Open **Insights & health > Monitor targets** in admin with a global operator account. Create a target with a meaningful name and public HTTP or HTTPS URL. Site-scoped access does not grant global monitoring control.
 
 Choose the check type:
 
-- **HTTP status:** compare the returned response with the expected minimum and maximum status codes. A slow response can produce a warning even when its status is accepted.
-- **SSL certificate:** compare the presented certificate expiry with the configured warning window. This is an expiry check, not a complete certificate-chain or security audit.
-- **Domain expiry:** obtain expiry from a configured RDAP provider. Unsupported suffixes and unavailable records produce an explicit failed check rather than a guessed expiry.
+- **HTTP status**: compare the returned response with the expected minimum and maximum status codes. A slow response can produce a warning even when its status is accepted.
+- **SSL certificate**: compare the presented certificate expiry with the configured warning window. This is an expiry check, not a complete certificate-chain or security audit.
+- **Domain expiry**: obtain expiry from a configured RDAP provider. Unsupported suffixes and unavailable records produce an explicit failed check rather than a guessed expiry.
 
 Set the interval, timeout and consecutive failure threshold. The scheduler interval bounds actual frequency. A threshold of two avoids opening an incident for the first isolated failure; choose it according to the service's tolerance, not to hide persistent failure.
 
-Save the target and use **Run check**. This queues work, so inspect the next recorded result before treating the target as operational. Verify the queue worker consumes the job and the last-checked time changes.
+For HTTP checks, the maximum expected status must be at least the minimum; equal bounds accept one status. These controls are hidden for other check types and retain saved values when switching types. Normal model saves enforce the same invariant; raw query-builder writes bypass model validation and are not a supported configuration interface. Existing contradictory ranges are retained for explicit repair and produce an unknown configuration result, rather than an outage.
+
+Enable the target, save it and use **Run now**. Disabled targets explain why this action is unavailable; a stale request queues nothing. Workers also recheck enabled state before execution. This queues work, so inspect the next recorded result before treating the target as operational. Verify the queue worker consumes the job and the last-checked time changes.
 
 ## Read Results And Incidents
 
-Use the dashboard to review enabled targets, current states and open incidents. Open a target to inspect its latest result and timestamps. Passing, warning, failing and unknown are distinct states; an unknown target has not established a successful check.
+Use the dashboard to review enabled targets, last recorded results and open incidents. Per-target monitoring evidence distinguishes fresh observations, overdue checks, never-checked targets and paused monitoring. An enabled target becomes overdue strictly after two configured intervals since its last observation: one interval to become due and one interval of grace. Paused targets retain their last result but do not count as overdue or never checked. Dashboard state counts include retained results, including paused targets; overdue and never-checked counts cover enabled targets only. A recent portfolio latest-check time says nothing about other targets. The doctor command retains its separately configured `max_stale_minutes` diagnostic threshold. Check scheduler and queue health when evidence is overdue; staleness does not invent an outage or incident. Open a target to inspect its latest result and timestamps. Passing, warning, failing and unknown are distinct states; an unknown target has not established a successful check.
 
-A failing target opens an incident after its configured failure threshold. Further failures update the existing incident rather than creating a new one each time. A passing result resolves its open incident automatically. The incident resource also supports recording operator resolution.
+A failing target opens an incident after its configured failure threshold. Further failures update the existing incident rather than creating a new one each time. A passing result resolves its open incident automatically. Use **Resolve manually** or **Reopen incident** with a reason to record an authorised operator decision, timestamp and actor in incident history. Repeated requests for the current status do nothing; reopening clears the resolution timestamp. Status and machine failure counts cannot be edited through the generic form. Manual closure retains the actual probe result and failure counters: it does not establish recovery. A subsequent failing probe at the threshold opens a new incident; reopening an old incident is refused if the target already has an open incident. Probe updates preserve operator history.
 
-Connect `SiteMonitorIncidentOpened` and `SiteMonitorIncidentResolved` to the application's approved notification or incident workflow. Test that integration independently, including recipient selection and failed delivery. These events do not themselves send external alerts.
+Connect `SiteMonitorIncidentOpened` and `SiteMonitorIncidentResolved` to the application's approved notification or incident workflow. Test that integration independently, including recipient selection and failed delivery. These events do not themselves send external alerts. `SiteMonitorIncidentResolved` continues to mean automatic recovery and carries the actual passing run. Subscribe separately to `SiteMonitorIncidentManuallyTransitioned` for operator decisions; its typed transition contains previous/new status, actor ID, reason and time, with no invented run. Operator history is appended under `metadata.operator_transitions`; existing incident rows need no migration.
 
 ## Pause And Retention
 

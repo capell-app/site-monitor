@@ -19,5 +19,7 @@ final class SiteMonitorDashboardData extends Data
         public readonly ?CarbonImmutable $oldestOpenIncidentAt,
         public readonly ?CarbonImmutable $latestCheckedAt,
         public readonly ?int $medianResponseMs,
+        public readonly int $overdueTargets = 0,
+        public readonly int $neverCheckedTargets = 0,
     ) {}
 }
