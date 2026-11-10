@@ -27,10 +27,10 @@ final class PrepareSiteMonitorScreenshotAction
             && is_string($appPath)
             && is_string($basePath)
             && $appPath === $basePath
-                && (realpath(base_path()) === realpath(dirname(__DIR__, 5) . '/vendor/orchestra/testbench-core/laravel')
-                    || str_starts_with((string) realpath(base_path()), dirname(__DIR__, 5) . '/tmp/testbench-skeletons/')), RuntimeException::class, 'Site Monitor screenshot fixtures require the selected disposable screenshot environment.');
+                && (realpath(base_path()) === realpath((str_contains(__DIR__, '/vendor/capell-app/') ? dirname(__DIR__, 6) : dirname(__DIR__, 5)) . '/vendor/orchestra/testbench-core/laravel')
+                    || str_starts_with((string) realpath(base_path()), (str_contains(__DIR__, '/vendor/capell-app/') ? dirname(__DIR__, 6) : dirname(__DIR__, 5)) . '/tmp/testbench-skeletons/')), RuntimeException::class, 'Site Monitor screenshot fixtures require the selected disposable screenshot environment.');
 
-        require_once dirname(__DIR__, 5) . '/scripts/screenshots/FixtureState.php';
+        require_once (str_contains(__DIR__, '/vendor/capell-app/') ? dirname(__DIR__, 6) : dirname(__DIR__, 5)) . '/scripts/screenshots/FixtureState.php';
         FixtureState::boot();
 
         $captureEmail = getenv('CAPELL_SCREENSHOT_ADMIN_EMAIL') ?: (getenv('CAPELL_ADMIN_EMAIL') ?: 'admin@example.com');

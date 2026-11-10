@@ -6,6 +6,7 @@ namespace Capell\SiteMonitor\Actions;
 
 use Capell\SiteMonitor\Contracts\SiteMonitorHostResolver;
 use Capell\SiteMonitor\Exceptions\UnsafeSiteMonitorTargetException;
+use Capell\SiteMonitor\Support\SiteMonitorNetworkAddressPolicy;
 use Lorisleiva\Actions\Concerns\AsFake;
 use Lorisleiva\Actions\Concerns\AsObject;
 
@@ -29,7 +30,9 @@ final class ResolveSiteMonitorSocketAddressAction
                 throw new UnsafeSiteMonitorTargetException('target_host_unresolvable', 'Target resolution did not return an IP address.');
             }
 
-            GuardSiteMonitorOutboundUrlAction::run('https://' . (str_contains($address, ':') ? '[' . $address . ']' : $address));
+            if (! GuardSiteMonitorOutboundUrlAction::privateTargetsAreAllowed() && ! SiteMonitorNetworkAddressPolicy::isPublic($address)) {
+                throw new UnsafeSiteMonitorTargetException('unsafe_target_address', 'Target host resolves to a private or reserved network address.');
+            }
         }
 
         return $addresses[0];

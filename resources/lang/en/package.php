@@ -79,7 +79,7 @@ return [
     ],
     'incident_history' => [
         'empty' => 'No operator decisions recorded.',
-        'entry' => ':at — Operator :actor: :status. Reason: :reason',
+        'entry' => ':at: Operator :actor: :status. Reason: :reason',
     ],
     'incident_statuses' => [
         'open' => 'Open',

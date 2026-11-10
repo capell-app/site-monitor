@@ -7,6 +7,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Query\Expression;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Schema\Grammars\MySqlGrammar;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
@@ -20,7 +21,7 @@ return new class extends Migration
             return;
         }
 
-        $this->dropImplicitTimestampUpdate('site_monitor_incidents', 'opened_at', $connection);
+        $this->dropImplicitTimestampUpdate($this->tableName('site_monitor_incidents'), 'opened_at', $connection);
     }
 
     public function down(): void
@@ -104,5 +105,31 @@ return new class extends Migration
         );
 
         return $default;
+    }
+
+    // Frozen here so a published repair remains independent of package code.
+    private function tableName(string $base): string
+    {
+        if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $base) !== 1) {
+            throw new InvalidArgumentException('Invalid base table name: ' . $base);
+        }
+
+        $aliases = Config::get('capell.database.table_aliases', []);
+        $alias = is_array($aliases) ? ($aliases[$base] ?? null) : null;
+        if ($alias !== null && ! is_string($alias)) {
+            throw new RuntimeException('Invalid database table alias for ' . $base);
+        }
+
+        $prefix = Config::get('capell.database.table_prefix', '');
+        if (! is_string($prefix)) {
+            throw new RuntimeException('Invalid database table prefix: capell.database.table_prefix must be a string.');
+        }
+
+        $name = $alias ?? $prefix . $base;
+        if (preg_match('/^[A-Za-z_][A-Za-z0-9_]{0,62}$/D', $name) !== 1) {
+            throw new RuntimeException('Invalid database table name: ' . $name);
+        }
+
+        return $name;
     }
 };

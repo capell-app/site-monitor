@@ -1,0 +1,31 @@
+{
+    "create_site_monitor_incidents_table": {
+        "names": [
+            "2026_06_13_000003_create_site_monitor_incidents_table"
+        ],
+        "sha256": [
+            "64cf030a061fa853c8ad9d06d37efedeb2dd50eab1086edaeb6f6e9f438d70c4",
+            "66fb2203e6c8f91b16725ca7f777c2e5dbdbe0c2de33e0c0d5665742ac88420a",
+            "99f3580404cf85631e57613536cb59e40cfa056169595fc9f2b7ca1cb96df9a8"
+        ]
+    },
+    "create_site_monitor_runs_table": {
+        "names": [
+            "2026_06_13_000002_create_site_monitor_runs_table"
+        ],
+        "sha256": [
+            "27bbc1fa708fa25e371a61f77f7eb6433f504e222ebc0f0c3238c77fa04d18f9",
+            "51b6d8778b6fd04d2aeb19054cf0b5e57848745bc7298b63846d6a870be20fe5",
+            "af5313b4e3aba6632e0d40329d7d72b14328366fa4679f0987e97e30653d8fe5"
+        ]
+    },
+    "create_site_monitor_targets_table": {
+        "names": [
+            "2026_06_13_000001_create_site_monitor_targets_table"
+        ],
+        "sha256": [
+            "206fc6dce7e1e83f49b6631ff1de48c3c63e585931586f7f905045f7fb315fb1",
+            "efc47dfd7fec641b7f282150190638dbf6098a65e66c3cbb44e3bb0c5664eba1"
+        ]
+    }
+}

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Capell\Core\Support\TableName;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -10,13 +11,13 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::hasTable('site_monitor_runs')) {
+        if (TableName::existsAndIsOwned('site_monitor_runs', basename(__FILE__, '.php'))) {
             return;
         }
 
-        Schema::create('site_monitor_runs', function (Blueprint $table): void {
+        Schema::create(TableName::resolve('site_monitor_runs'), function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('target_id')->constrained('site_monitor_targets')->cascadeOnDelete();
+            $table->foreignId('target_id')->constrained(TableName::resolve('site_monitor_targets'))->cascadeOnDelete();
             $table->string('state')->index();
             $table->unsignedSmallInteger('status_code')->nullable()->index();
             $table->unsignedInteger('response_ms')->nullable();
@@ -32,6 +33,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('site_monitor_runs');
+        Schema::dropIfExists(TableName::resolve('site_monitor_runs'));
     }
 };

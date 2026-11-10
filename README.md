@@ -2,191 +2,53 @@
 
 <!-- prettier-ignore-start -->
 
-## What This Plugin Adds
-
-Site Monitor is an **Available**, **Schema-owning** Capell package in the **Capell Operations** product group. It ships as `capell-app/site-monitor` and extends these surfaces: admin, console, shared.
+## What It Does
 
 Site Monitor records HTTP availability, certificate expiry, domain expiry and incidents inside Capell admin, with checks running from your application host. It is a free first-party package with Stable maturity. Check the release catalogue for the verification and availability of the version you plan to install.
 
+- **Price and availability:** Check current availability and price on the [Capell Marketplace listing](https://capell.app/extensions/site-monitor).
+- **Licence:** Check the licence terms on the [Capell Marketplace listing](https://capell.app/extensions/site-monitor).
+- **Requires:** `PHP ^8.4`, `capell-app/admin ^1.0.71`, `capell-app/core ^1.0.76`, `capell-app/discovery-foundation ^1.0`, `capell-app/frontend ^1.0`, `filament/filament ^5.7.6`, `filament/support ^5.7.6`, `laravel/framework ^12.61.1|^13.12.0`, `lorisleiva/laravel-actions ^2.8`, `spatie/laravel-data ^4.5`, `spatie/laravel-package-tools ^1.14.1`.
+- **Install:** `composer require capell-app/site-monitor`.
+
 The package supplies a health dashboard, target and incident resources, scheduled checks and queue jobs. Installation requires current release evidence and host verification; configure the scheduler, queue worker and notification integration before relying on its alerts.
 
-Status details:
-
-- Status: Available
-- Tier: free
-- Bundle: operations
-- Composer package: `capell-app/site-monitor`
-- Namespace: `Capell\SiteMonitor`
-- Theme key: not applicable
-
-## Why It Matters
+## Who It Is For
 
 **For developers:** Run checks outside the public render path, inspect typed results, connect incident events to your alerting system and retain operator-owned target settings during automatic discovery.
 
 **For teams:** Review failing targets and expiry warnings alongside other site operations. A check runs from your application host, not an independent monitoring network; retain independent monitoring for outages that also stop that host.
 
-## Screens And Workflow
+## Quick Start
 
-Screenshot contract: `docs/screenshots.json`.
+1. Install the package: `composer require capell-app/site-monitor`.
+2. Open the package admin page or resource and verify Site Monitor is available.
+
+## Configure
+
+- **Configuration files:** `config/capell-site-monitor.php`.
+- **Commands:** `php artisan capell:site-monitor-screenshot-fixture`, `php artisan capell:site-monitor:doctor`, `php artisan capell:site-monitor:run`.
+
+## Limits And Pitfalls
+
+- Install the required Capell packages at the versions in `composer.json`: `capell-app/admin ^1.0.71`, `capell-app/core ^1.0.76`, `capell-app/discovery-foundation ^1.0`, `capell-app/frontend ^1.0`.
+- Run migrations before opening package resources or public routes.
+- Keep the host Laravel scheduler running so package-registered schedules can execute: `capell:site-monitor:run (everyMinute; package registered)`.
+- Custom write integrations must preserve invalidation for `site-monitor` cache tags.
+
+## Screens And Workflow
 
 ![Site Monitor target form](docs/screenshots/site-monitor-target-form.png)
 
 ![Site Monitor targets index](docs/screenshots/site-monitor-targets-index.png)
 
-- Site Monitor extension card (marketplace, supplementary documentation fixture).
-- Site Monitor dashboard (admin, supplementary documentation fixture).
-- Site Monitor incident detail (admin, supplementary documentation fixture).
-- Site Monitor target form (admin, required evidence).
-- Site Monitor targets index (admin, supplementary evidence).
-- Site Monitor incident resolution form (admin, supplementary evidence).
-- Site Monitor dashboard with admin sidebar menu open (admin, supplementary evidence).
-
-## Technical Shape
-
-### Service providers
-
-- `Capell\SiteMonitor\Providers\SiteMonitorServiceProvider`
-- `Capell\SiteMonitor\Providers\AdminServiceProvider`
-
-### Config files
-
-- `packages/site-monitor/config/capell-site-monitor.php`
-
-### Migrations
-
-- `packages/site-monitor/database/migrations/2026_06_13_000001_create_site_monitor_targets_table.php`
-- `packages/site-monitor/database/migrations/2026_06_13_000002_create_site_monitor_runs_table.php`
-- `packages/site-monitor/database/migrations/2026_06_13_000003_create_site_monitor_incidents_table.php`
-- `packages/site-monitor/database/migrations/2026_10_04_000001_remove_implicit_timestamp_updates_from_site_monitor.php`
-
-### Models
-
-- `RetainsTimestampInstants`
-- `SiteMonitorIncident`
-- `SiteMonitorRun`
-- `SiteMonitorTarget`
-
-### Filament classes
-
-- `SiteMonitorDashboardPage`
-- `EditSiteMonitorIncident`
-- `ListSiteMonitorIncidents`
-- `SiteMonitorIncidentResource`
-- `CreateSiteMonitorTarget`
-- `EditSiteMonitorTarget`
-- `ListSiteMonitorTargets`
-- `SiteMonitorTargetResource`
-
-### Policies
-
-- `AbstractSiteMonitorResourcePolicy`
-- `SiteMonitorIncidentPolicy`
-- `SiteMonitorTargetPolicy`
-
-### Extension contracts
-
-- `SiteMonitorDomainExpiryClient`
-- `SiteMonitorHostResolver`
-- `SiteMonitorHttpClient`
-
-### Events
-
-- `SiteMonitorIncidentManuallyTransitioned`
-- `SiteMonitorIncidentOpened`
-- `SiteMonitorIncidentResolved`
-
-### Actions
-
-- `AuthoriseSiteMonitorTargetSiteAction`
-- `BuildSiteMonitorDashboardAction`
-- `BuildSiteMonitorEvidenceAction`
-- `PrepareSiteMonitorScreenshotAction`
-- `GuardSiteMonitorOutboundUrlAction`
-- `OrderSiteMonitorTimestampsAction`
-- `PruneSiteMonitorRunsAction`
-- `QueueSiteMonitorTargetCheckAction`
-- `ReconcileSiteMonitorIncidentAction`
-- `RecordSiteMonitorRunAction`
-- `ResolveRdapEndpointAction`
-- `ResolveSiteMonitorSocketAddressAction`
-- `ResolveSiteMonitorTargetsAction`
-- `RunDueSiteMonitorChecksAction`
-- `RunSiteMonitorCheckAction`
-- `TransitionSiteMonitorIncidentAction`
-- `ValidateSiteMonitorStatusRangeAction`
-
-### Data objects
-
-- `SiteMonitorCheckResultData`
-- `SiteMonitorDashboardData`
-- `SiteMonitorEvidenceData`
-- `SiteMonitorIncidentData`
-- `SiteMonitorIncidentTransitionData`
-- `SiteMonitorTargetData`
-
-### Jobs
-
-- `RunSiteMonitorTargetJob`
-
-### Command signatures
-
-- `capell:site-monitor-screenshot-fixture`
-- `capell:site-monitor:doctor`
-- `capell:site-monitor:run`
-
-### Manifest action API
-
-- `buildSiteMonitorDashboard: Capell\SiteMonitor\Actions\BuildSiteMonitorDashboardAction`
-- `reconcileSiteMonitorIncident: Capell\SiteMonitor\Actions\ReconcileSiteMonitorIncidentAction`
-- `recordSiteMonitorRun: Capell\SiteMonitor\Actions\RecordSiteMonitorRunAction`
-- `resolveSiteMonitorTargets: Capell\SiteMonitor\Actions\ResolveSiteMonitorTargetsAction`
-- `runDueSiteMonitorChecks: Capell\SiteMonitor\Actions\RunDueSiteMonitorChecksAction`
-- `runSiteMonitorCheck: Capell\SiteMonitor\Actions\RunSiteMonitorCheckAction`
-
-### Scheduled commands
-
-- `capell:site-monitor:run (everyMinute; package registered)`
-
-### Console command classes
-
-- `RunSiteMonitorCommand`
-- `SeedSiteMonitorScreenshotFixtureCommand`
-- `SiteMonitorDoctorCommand`
-
-### Manifest contributions
-
-- `admin-page: Capell\SiteMonitor\Manifest\SiteMonitorDashboardPageContribution`
-- `admin-resource: Capell\SiteMonitor\Manifest\SiteMonitorIncidentResourceContribution`
-- `admin-resource: Capell\SiteMonitor\Manifest\SiteMonitorTargetResourceContribution`
-- `console-command: Capell\SiteMonitor\Manifest\SiteMonitorConsoleCommandsContribution`
-- `health-check: Capell\SiteMonitor\Manifest\SiteMonitorHealthContribution`
-- `migration: Capell\SiteMonitor\Manifest\SiteMonitorMigrationsContribution`
-- `model: Capell\SiteMonitor\Manifest\SiteMonitorIncidentModelContribution`
-- `model: Capell\SiteMonitor\Manifest\SiteMonitorRunModelContribution`
-- `model: Capell\SiteMonitor\Manifest\SiteMonitorTargetModelContribution`
-- `scheduled-job: Capell\SiteMonitor\Manifest\SiteMonitorScheduledChecksContribution`
-
-### Health checks
-
-- `Capell\SiteMonitor\Health\SiteMonitorHealthCheck`
-
-### Blade views
-
-- `packages/site-monitor/resources/views/filament/pages/site-monitor-dashboard.blade.php`
-
-### Cache tags
-
-- `site-monitor`
-
-
-## Data Model
-
-- Required tables: `site_monitor_targets`, `site_monitor_runs`, `site_monitor_incidents`.
-- Models: `RetainsTimestampInstants`, `SiteMonitorIncident`, `SiteMonitorRun`, `SiteMonitorTarget`.
-- Core record references in migrations: `sites via site_id`, `languages via language_id`.
-- Migration files: `2026_06_13_000001_create_site_monitor_targets_table.php`, `2026_06_13_000002_create_site_monitor_runs_table.php`, `2026_06_13_000003_create_site_monitor_incidents_table.php`, `2026_10_04_000001_remove_implicit_timestamp_updates_from_site_monitor.php`.
-- Migration impact: run host migrations through the package install flow before opening package surfaces.
-- Deletion/retention behaviour: migrations declare cascade-on-delete relationships and null-on-delete relationships; no timed pruning or retention schedule is declared in `capell.json`.
+- Site Monitor extension card (marketplace).
+- Site Monitor dashboard (admin).
+- Site Monitor incident detail (admin).
+- Site Monitor target form (admin).
+- Site Monitor targets index (admin).
+- Site Monitor incident resolution form (admin).
+- Site Monitor dashboard with admin sidebar menu open (admin).
 
 ## Install Impact
 
@@ -202,14 +64,6 @@ Screenshot contract: `docs/screenshots.json`.
 - Cache tags: `site-monitor`.
 - Commands: `capell:site-monitor-screenshot-fixture`, `capell:site-monitor:doctor`, `capell:site-monitor:run`.
 
-## Common Pitfalls
-
-- Keep required Capell packages on compatible v4 releases: `capell-app/admin`, `capell-app/core`, `capell-app/discovery-foundation`, `capell-app/frontend`.
-- Run migrations before opening package resources or public routes.
-- Review package configuration before production-like verification: `config/capell-site-monitor.php`.
-- Keep the host Laravel scheduler running so package-registered schedules can execute: `capell:site-monitor:run (everyMinute; package registered)`.
-- Custom write integrations must preserve invalidation for `site-monitor` cache tags.
-
 ## Troubleshooting
 
 | Symptom | Likely cause | Check | Fix |
@@ -219,14 +73,11 @@ Screenshot contract: `docs/screenshots.json`.
 | Admin screen or command fails on missing table | Package migrations have not run | Check the tables listed in `Data Model` | Run host migrations and rerun the focused package test |
 | Background work does not run | Queue worker or declared schedule is not active | Check the jobs and scheduled commands listed in `Technical Shape` | Start the queue worker or host scheduler, then run the focused command or package test |
 
-## Quick Start
-
-1. Install the package: `composer require capell-app/site-monitor`.
-2. Open the package admin page or resource and verify Site Monitor is available.
-
 ## Upgrading
 
 No manual steps between minor versions.
+
+Read [CHANGELOG.md](CHANGELOG.md) before upgrading.
 
 ## Next Steps
 
@@ -236,11 +87,11 @@ No manual steps between minor versions.
 - [Admin guide](docs/admin-guide.md)
 - Configuration files: [`config/capell-site-monitor.php`](config/capell-site-monitor.php).
 - [Troubleshooting](#troubleshooting)
-- [Screenshot contract](docs/screenshots.json)
+- [Developer reference](docs/reference.md)
 - [Marketplace assets](docs/assets/marketplace/)
 - [Capell content language plan](../../docs/CONTENT_LANGUAGE_PLAN.md)
 - [Capell documentation design system](../../docs/DESIGN_SYSTEM.md)
 - [Capell and package ERD notes](../../docs/erd/capell-and-package-erds.md)
-- Related packages: [Discovery Foundation](../discovery-foundation/README.md), [Diagnostics](../diagnostics/README.md), [Email Studio](../email-studio/README.md), [Exception Reports](../exception-reports/README.md), [Seo Suite](../seo-suite/README.md), [Site Discovery](../site-discovery/README.md), [Url Manager](../url-manager/README.md).
+- Related packages: [Discovery Core](../discovery-foundation/README.md), [Diagnostics](../diagnostics/README.md), [Email Studio](../email-studio/README.md), [Exception Reports](../exception-reports/README.md), [SEO Suite](../seo-suite/README.md), [Site Discovery](../site-discovery/README.md), [URL Manager](../url-manager/README.md).
 
 <!-- prettier-ignore-end -->

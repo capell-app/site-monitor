@@ -6,6 +6,7 @@ namespace Capell\SiteMonitor\Health;
 
 use Capell\Core\Contracts\Extensions\ChecksExtensionHealth;
 use Capell\Core\Data\Diagnostics\DoctorCheckResultData;
+use Capell\Core\Support\TableName;
 use Capell\SiteMonitor\Console\Commands\RunSiteMonitorCommand;
 use Capell\SiteMonitor\Enums\SiteMonitorIncidentStatus;
 use Capell\SiteMonitor\Models\SiteMonitorIncident;
@@ -63,9 +64,9 @@ final class SiteMonitorHealthCheck implements ChecksExtensionHealth
     private function storageCheck(): DoctorCheckResultData
     {
         $missingTables = collect([
-            'site_monitor_targets',
-            'site_monitor_runs',
-            'site_monitor_incidents',
+            TableName::resolve('site_monitor_targets'),
+            TableName::resolve('site_monitor_runs'),
+            TableName::resolve('site_monitor_incidents'),
         ])
             ->reject(static fn (string $table): bool => Schema::hasTable($table))
             ->values()

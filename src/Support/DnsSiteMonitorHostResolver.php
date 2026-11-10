@@ -26,6 +26,17 @@ final class DnsSiteMonitorHostResolver implements SiteMonitorHostResolver
             }
         }
 
+        if ($addresses === []) {
+            $ipv4Addresses = @gethostbynamel($host);
+
+            if (is_array($ipv4Addresses)) {
+                $addresses = array_values(array_filter(
+                    $ipv4Addresses,
+                    static fn (string $address): bool => filter_var($address, FILTER_VALIDATE_IP) !== false,
+                ));
+            }
+        }
+
         return array_values(array_unique($addresses));
     }
 }

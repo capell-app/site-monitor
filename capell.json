@@ -32,7 +32,9 @@
         "conflicts": []
     },
     "providers": {
-        "metadata": [],
+        "metadata": [
+            "Capell\\SiteMonitor\\Providers\\MigrationMetadataServiceProvider"
+        ],
         "install": [],
         "runtime": [
             "Capell\\SiteMonitor\\Providers\\SiteMonitorServiceProvider"
@@ -183,6 +185,7 @@
             "requiresTimeouts": true,
             "requiresSecretRedaction": true,
             "clients": [
+                "Capell\\SiteMonitor\\Actions\\RunSiteMonitorCheckAction",
                 "Capell\\SiteMonitor\\Support\\LaravelSiteMonitorHttpClient",
                 "Capell\\SiteMonitor\\Support\\RdapDomainExpiryClient"
             ]
@@ -250,6 +253,22 @@
     "marketplace": {
         "summary": "Availability and expiry checks with incident history in Capell admin.",
         "description": "Site Monitor checks public URLs, SSL certificates, and domain expiry from scheduled jobs outside the public render path, then records runs and incidents for operators inside Capell admin.",
+        "problem": "Our operators may miss an outage or an expiring certificate until visitors report it.",
+        "outcome": "Our operators have availability and expiry records with incident history.",
+        "faq": [
+            {
+                "question": "Where do monitoring checks run from?",
+                "answer": "Checks run from the Capell application host, not an independent monitoring network."
+            },
+            {
+                "question": "What must be running for alerts?",
+                "answer": "Configure the scheduler, queue worker and notification integration before relying on alerts."
+            },
+            {
+                "question": "Is Site Monitor a paid package?",
+                "answer": "Site Monitor is a free first-party package."
+            }
+        ],
         "screenshots": [
             {
                 "path": "docs/screenshots/site-monitor-target-form.png",

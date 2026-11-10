@@ -7,8 +7,8 @@ namespace Capell\SiteMonitor\Support;
 use Capell\Core\Support\Http\OutboundHttpRetry;
 use Capell\SiteMonitor\Actions\GuardSiteMonitorOutboundUrlAction;
 use Capell\SiteMonitor\Actions\ResolveRdapEndpointAction;
+use Capell\SiteMonitor\Actions\ResolveSiteMonitorSocketAddressAction;
 use Capell\SiteMonitor\Contracts\SiteMonitorDomainExpiryClient;
-use Capell\SiteMonitor\Exceptions\UnsafeSiteMonitorTargetException;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Http;
 use InvalidArgumentException;
@@ -106,7 +106,7 @@ final class RdapDomainExpiryClient implements SiteMonitorDomainExpiryClient
         return [
             'allow_redirects' => false,
             'curl' => [
-                CURLOPT_RESOLVE => [sprintf('%s:%d:%s', $endpoint['host'], $endpoint['port'], $endpoint['address'])],
+                CURLOPT_RESOLVE => [$this->curlResolveEntry($endpoint)],
             ],
         ];
     }
@@ -125,36 +125,23 @@ final class RdapDomainExpiryClient implements SiteMonitorDomainExpiryClient
         return $scheme === 'http' ? 80 : 443;
     }
 
+    /**
+     * Resolve once, guard every returned address, and pin cURL to the first
+     * guarded address so DNS cannot be re-answered between check and connect.
+     */
     private function resolvedAddress(string $host): string
     {
-        if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
-            $this->guardResolvedAddress($host);
-
-            return $host;
-        }
-
-        $addresses = gethostbynamel($host);
-
-        if (is_array($addresses) && $addresses !== []) {
-            $address = $addresses[0];
-
-            $this->guardResolvedAddress($address);
-
-            return $address;
-        }
-
-        throw new UnsafeSiteMonitorTargetException('target_host_unresolvable', 'RDAP endpoint host could not be resolved before the outbound check.');
+        return ResolveSiteMonitorSocketAddressAction::run($host);
     }
 
-    private function guardResolvedAddress(string $address): void
+    /**
+     * @param  array{host: string, port: int, address: string}  $endpoint
+     */
+    private function curlResolveEntry(array $endpoint): string
     {
-        if (! app()->isProduction() && (bool) config('capell-site-monitor.allow_private_targets', false)) {
-            return;
-        }
+        $address = str_contains($endpoint['address'], ':') ? '[' . $endpoint['address'] . ']' : $endpoint['address'];
 
-        if (filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
-            throw new UnsafeSiteMonitorTargetException('unsafe_target_address', 'RDAP endpoint host resolves to a private or reserved network address.');
-        }
+        return sprintf('%s:%d:%s', $endpoint['host'], $endpoint['port'], $address);
     }
 
     private function integerConfig(string $key, int $default): int

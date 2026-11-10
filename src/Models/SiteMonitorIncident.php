@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Capell\SiteMonitor\Models;
 
+use Capell\Core\Concerns\HasCapellTable;
 use Capell\SiteMonitor\Enums\SiteMonitorIncidentStatus;
 use Capell\SiteMonitor\Models\Concerns\RetainsTimestampInstants;
 use Carbon\CarbonImmutable;
@@ -28,6 +29,8 @@ use Override;
  */
 final class SiteMonitorIncident extends Model
 {
+    use HasCapellTable;
+
     /** @use HasFactory<Factory<static>> */
     use HasFactory;
 

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Capell\SiteMonitor\Actions;
 
+use Capell\SiteMonitor\Contracts\SiteMonitorHostResolver;
 use Capell\SiteMonitor\Exceptions\UnsafeSiteMonitorTargetException;
+use Capell\SiteMonitor\Support\SiteMonitorNetworkAddressPolicy;
 use Lorisleiva\Actions\Concerns\AsFake;
 use Lorisleiva\Actions\Concerns\AsObject;
 
@@ -15,6 +17,14 @@ final class GuardSiteMonitorOutboundUrlAction
 {
     use AsFake;
     use AsObject;
+
+    public function __construct(private readonly SiteMonitorHostResolver $resolver) {}
+
+    public static function privateTargetsAreAllowed(): bool
+    {
+        return ! app()->isProduction()
+            && (bool) config('capell-site-monitor.allow_private_targets', false);
+    }
 
     public function handle(string $url): string
     {
@@ -43,7 +53,7 @@ final class GuardSiteMonitorOutboundUrlAction
 
     private function guardHost(string $host): void
     {
-        if ($this->privateTargetsAreAllowed()) {
+        if (self::privateTargetsAreAllowed()) {
             return;
         }
 
@@ -51,62 +61,17 @@ final class GuardSiteMonitorOutboundUrlAction
             throw new UnsafeSiteMonitorTargetException('unsafe_target_host', 'Target host is local or internal.');
         }
 
-        $addresses = $this->resolveAddresses($host);
+        $addresses = $this->resolver->addresses($host);
 
         if ($addresses === []) {
             throw new UnsafeSiteMonitorTargetException('target_host_unresolvable', 'Target host could not be resolved before the outbound check.');
         }
 
-        $unsafeAddresses = array_filter(
-            $addresses,
-            static fn (string $address): bool => filter_var(
-                $address,
-                FILTER_VALIDATE_IP,
-                FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE,
-            ) === false,
-        );
-
-        if ($unsafeAddresses !== []) {
-            throw new UnsafeSiteMonitorTargetException('unsafe_target_address', 'Target host resolves to a private or reserved network address.');
-        }
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function resolveAddresses(string $host): array
-    {
-        if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
-            return [$host];
-        }
-
-        $records = @dns_get_record($host, DNS_A | DNS_AAAA);
-        $addresses = [];
-
-        if ($records === false) {
-            $records = [];
-        }
-
-        foreach ($records as $record) {
-            $address = $record['ip'] ?? $record['ipv6'] ?? null;
-
-            if (is_string($address) && filter_var($address, FILTER_VALIDATE_IP) !== false) {
-                $addresses[] = $address;
+        foreach ($addresses as $address) {
+            if (! SiteMonitorNetworkAddressPolicy::isPublic($address)) {
+                throw new UnsafeSiteMonitorTargetException('unsafe_target_address', 'Target host resolves to a private or reserved network address.');
             }
         }
-
-        if ($addresses === []) {
-            $ipv4Addresses = @gethostbynamel($host);
-
-            if (is_array($ipv4Addresses)) {
-                $addresses = array_values(array_filter(
-                    $ipv4Addresses,
-                    static fn (string $address): bool => filter_var($address, FILTER_VALIDATE_IP) !== false,
-                ));
-            }
-        }
-
-        return array_values(array_unique($addresses));
     }
 
     private function normalizedHost(mixed $host): ?string
@@ -129,11 +94,5 @@ final class GuardSiteMonitorOutboundUrlAction
         return $host === 'localhost'
             || str_ends_with($host, '.localhost')
             || ! str_contains($host, '.');
-    }
-
-    private function privateTargetsAreAllowed(): bool
-    {
-        return ! app()->isProduction()
-            && (bool) config('capell-site-monitor.allow_private_targets', false);
     }
 }

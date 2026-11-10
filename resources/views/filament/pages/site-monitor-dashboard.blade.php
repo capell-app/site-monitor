@@ -2,14 +2,14 @@
     @php
         $dashboard = $this->dashboard();
         $stats = [
-            __('capell-site-monitor::package.dashboard.total_targets') => number_format($dashboard->totalTargets),
-            __('capell-site-monitor::package.dashboard.enabled_targets') => number_format($dashboard->enabledTargets),
-            __('capell-site-monitor::package.dashboard.passing_targets') => number_format($dashboard->passingTargets),
-            __('capell-site-monitor::package.dashboard.warning_targets') => number_format($dashboard->warningTargets),
-            __('capell-site-monitor::package.dashboard.failing_targets') => number_format($dashboard->failingTargets),
-            __('capell-site-monitor::package.dashboard.overdue_targets') => number_format($dashboard->overdueTargets),
-            __('capell-site-monitor::package.dashboard.never_checked_targets') => number_format($dashboard->neverCheckedTargets),
-            __('capell-site-monitor::package.dashboard.open_incidents') => number_format($dashboard->openIncidents),
+            __('capell-site-monitor::package.dashboard.total_targets') => \Illuminate\Support\Number::format($dashboard->totalTargets, precision: 0, locale: app()->getLocale()),
+            __('capell-site-monitor::package.dashboard.enabled_targets') => \Illuminate\Support\Number::format($dashboard->enabledTargets, precision: 0, locale: app()->getLocale()),
+            __('capell-site-monitor::package.dashboard.passing_targets') => \Illuminate\Support\Number::format($dashboard->passingTargets, precision: 0, locale: app()->getLocale()),
+            __('capell-site-monitor::package.dashboard.warning_targets') => \Illuminate\Support\Number::format($dashboard->warningTargets, precision: 0, locale: app()->getLocale()),
+            __('capell-site-monitor::package.dashboard.failing_targets') => \Illuminate\Support\Number::format($dashboard->failingTargets, precision: 0, locale: app()->getLocale()),
+            __('capell-site-monitor::package.dashboard.overdue_targets') => \Illuminate\Support\Number::format($dashboard->overdueTargets, precision: 0, locale: app()->getLocale()),
+            __('capell-site-monitor::package.dashboard.never_checked_targets') => \Illuminate\Support\Number::format($dashboard->neverCheckedTargets, precision: 0, locale: app()->getLocale()),
+            __('capell-site-monitor::package.dashboard.open_incidents') => \Illuminate\Support\Number::format($dashboard->openIncidents, precision: 0, locale: app()->getLocale()),
         ];
     @endphp
 
@@ -73,7 +73,7 @@
                 @if ($dashboard->medianResponseMs === null)
                     {{ __('capell-site-monitor::package.dashboard.no_data') }}
                 @else
-                    {{ __('capell-site-monitor::package.dashboard.milliseconds', ['value' => number_format($dashboard->medianResponseMs)]) }}
+                    {{ __('capell-site-monitor::package.dashboard.milliseconds', ['value' => \Illuminate\Support\Number::format($dashboard->medianResponseMs, precision: 0, locale: app()->getLocale())]) }}
                 @endif
             </div>
         </div>

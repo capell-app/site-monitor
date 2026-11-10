@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Capell\SiteMonitor\Providers;
 
+use Capell\Core\Contracts\Security\SecurityInventoryContributor;
+use Capell\Core\Contracts\Security\SecurityWeaknessCheck;
 use Capell\Core\Facades\CapellCore;
 use Capell\Core\Support\Packages\AbstractPackageServiceProvider;
+use Capell\Core\Support\TableName;
 use Capell\SiteMonitor\Console\Commands\RunSiteMonitorCommand;
 use Capell\SiteMonitor\Console\Commands\SeedSiteMonitorScreenshotFixtureCommand;
 use Capell\SiteMonitor\Console\Commands\SiteMonitorDoctorCommand;
@@ -15,6 +18,8 @@ use Capell\SiteMonitor\Contracts\SiteMonitorHttpClient;
 use Capell\SiteMonitor\Models\SiteMonitorIncident;
 use Capell\SiteMonitor\Models\SiteMonitorRun;
 use Capell\SiteMonitor\Models\SiteMonitorTarget;
+use Capell\SiteMonitor\Security\CertificateExpiryWeaknessCheck;
+use Capell\SiteMonitor\Security\SiteMonitorSecurityInventoryContributor;
 use Capell\SiteMonitor\Support\DnsSiteMonitorHostResolver;
 use Capell\SiteMonitor\Support\LaravelSiteMonitorHttpClient;
 use Capell\SiteMonitor\Support\RdapDomainExpiryClient;
@@ -64,6 +69,9 @@ final class SiteMonitorServiceProvider extends AbstractPackageServiceProvider
     #[Override]
     protected function bootInstalledRuntime(): void
     {
+        $this->app->tag([SiteMonitorSecurityInventoryContributor::class], SecurityInventoryContributor::TAG);
+        $this->app->tag([CertificateExpiryWeaknessCheck::class], SecurityWeaknessCheck::TAG);
+
         $this
             ->registerModels()
             ->registerProtectedTables();
@@ -94,9 +102,9 @@ final class SiteMonitorServiceProvider extends AbstractPackageServiceProvider
 
     private function registerProtectedTables(): self
     {
-        CapellCore::registerProtectedTable('site_monitor_targets');
-        CapellCore::registerProtectedTable('site_monitor_runs');
-        CapellCore::registerProtectedTable('site_monitor_incidents');
+        CapellCore::registerProtectedTable(TableName::resolve('site_monitor_targets'));
+        CapellCore::registerProtectedTable(TableName::resolve('site_monitor_runs'));
+        CapellCore::registerProtectedTable(TableName::resolve('site_monitor_incidents'));
 
         return $this;
     }

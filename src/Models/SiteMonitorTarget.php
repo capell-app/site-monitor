@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Capell\SiteMonitor\Models;
 
+use Capell\Core\Concerns\HasCapellTable;
 use Capell\SiteMonitor\Actions\ValidateSiteMonitorStatusRangeAction;
 use Capell\SiteMonitor\Enums\SiteMonitorCheckType;
 use Capell\SiteMonitor\Enums\SiteMonitorIncidentStatus;
@@ -41,6 +42,8 @@ use Override;
  */
 final class SiteMonitorTarget extends Model
 {
+    use HasCapellTable;
+
     /** @use HasFactory<Factory<static>> */
     use HasFactory;
 
