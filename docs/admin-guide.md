@@ -12,7 +12,7 @@ Keep independent monitoring for the application host itself. Site Monitor cannot
 
 ## Add A Target
 
-Open **Insights & health > Monitor targets** in admin with a global operator account. Create a target with a meaningful name and public HTTP or HTTPS URL. Site-scoped access does not grant global monitoring control.
+Open **Reports > Monitor targets** in admin with a global operator account. Create a target with a meaningful name and public HTTP or HTTPS URL. Site-scoped access does not grant global monitoring control.
 
 Choose the check type:
 

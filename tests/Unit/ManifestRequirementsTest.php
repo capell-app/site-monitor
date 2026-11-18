@@ -42,7 +42,7 @@ it('declares the implemented package surfaces in capell manifest', function (): 
         ->and(data_get($manifest, 'database.migrations'))->toBeTrue()
         ->and(data_get($manifest, 'commands.run'))->toBe('capell:site-monitor:run')
         ->and(data_get($manifest, 'commands.doctor'))->toBe('capell:site-monitor:doctor')
-        ->and(data_get($manifest, 'capabilities', []))->toContain('incident-notification-events')
+        ->and(data_get($manifest, 'capabilities', []))->toBe([])
         ->and(data_get($manifest, 'healthChecks', []))->not->toBeEmpty()
         ->and(data_get($manifest, 'security.publicSurface.routeNames', []))->toBe([])
         ->and(data_get($manifest, 'contributionTraceability.deferredContributions'))->toBe([]);

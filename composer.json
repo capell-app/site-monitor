@@ -1,6 +1,6 @@
 {
     "name": "capell-app/site-monitor",
-    "description": "Availability, certificate expiry, domain expiry, and incident monitoring from your Capell application host.",
+    "description": "Monitor public addresses for status, speed, certificate expiry and domain renewal, with an incident log in the Capell admin.",
     "type": "library",
     "license": "proprietary",
     "autoload": {

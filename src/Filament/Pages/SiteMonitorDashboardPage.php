@@ -6,6 +6,7 @@ namespace Capell\SiteMonitor\Filament\Pages;
 
 use BackedEnum;
 use Capell\Admin\Contracts\Diagnostics\SiteHealthSubpage;
+use Capell\Admin\Enums\NavigationGroupEnum;
 use Capell\Admin\Filament\Pages\SiteHealthPage;
 use Capell\Admin\Support\SiteScope;
 use Capell\Core\Facades\CapellCore;
@@ -49,9 +50,10 @@ final class SiteMonitorDashboardPage extends Page implements SiteHealthSubpage
     }
 
     #[Override]
-    public static function getNavigationGroup(): string
+    public static function getNavigationGroup(): NavigationGroupEnum
     {
-        return __('capell-admin::navigation.group_monitoring');
+        // Site Health children must share its group to nest beneath it.
+        return SiteHealthPage::getNavigationGroup();
     }
 
     #[Override]

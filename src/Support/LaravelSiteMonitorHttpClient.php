@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Capell\SiteMonitor\Support;
 
+use Capell\Core\Exceptions\OutboundRequestRefusedException;
+use Capell\Core\Support\Http\OutboundHttp;
+use Capell\Core\Support\Http\OutboundHttpPolicy;
 use Capell\SiteMonitor\Actions\GuardSiteMonitorOutboundUrlAction;
 use Capell\SiteMonitor\Actions\ResolveSiteMonitorSocketAddressAction;
 use Capell\SiteMonitor\Contracts\SiteMonitorHttpClient;
@@ -14,12 +17,18 @@ use Capell\SiteMonitor\Models\SiteMonitorTarget;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
-use InvalidArgumentException;
 use Override;
+use Psr\Http\Message\ResponseInterface;
 use Throwable;
 
 final class LaravelSiteMonitorHttpClient implements SiteMonitorHttpClient
 {
+    /**
+     * A status check only needs the response line, but a monitored page may be
+     * large; refuse anything beyond this so one target cannot exhaust memory.
+     */
+    private const int MAX_RESPONSE_BYTES = 25 * 1024 * 1024;
+
     #[Override]
     public function check(SiteMonitorTarget $target): SiteMonitorCheckResultData
     {
@@ -34,6 +43,7 @@ final class LaravelSiteMonitorHttpClient implements SiteMonitorHttpClient
             );
         }
 
+        $deadline = new SiteMonitorDeadline($target->timeout_ms);
         $startedAt = microtime(true);
         $url = $target->url;
         $redirectChain = [];
@@ -41,7 +51,7 @@ final class LaravelSiteMonitorHttpClient implements SiteMonitorHttpClient
         try {
             GuardSiteMonitorOutboundUrlAction::run($url);
 
-            $response = $this->requestFollowingSafeRedirects($url, $target, $redirectChain);
+            $response = $this->requestFollowingSafeRedirects($url, $redirectChain, $deadline);
         } catch (UnsafeSiteMonitorTargetException $exception) {
             return $this->failure($exception->errorType, $exception->getMessage(), $startedAt, $redirectChain);
         } catch (ConnectionException $exception) {
@@ -74,17 +84,14 @@ final class LaravelSiteMonitorHttpClient implements SiteMonitorHttpClient
     /**
      * @param  list<string>  $redirectChain
      */
-    private function requestFollowingSafeRedirects(string $url, SiteMonitorTarget $target, array &$redirectChain): Response
+    private function requestFollowingSafeRedirects(string $url, array &$redirectChain, SiteMonitorDeadline $deadline): Response
     {
         $maxRedirects = $this->integerConfig('capell-site-monitor.max_redirects', 5);
 
         for ($redirectCount = 0; $redirectCount <= $maxRedirects; $redirectCount++) {
-            $endpoint = $this->endpoint($url);
-            $response = Http::timeout(max(1, (int) ceil($target->timeout_ms / 1000)))
-                ->connectTimeout(max(1, (int) ceil($target->timeout_ms / 1000)))
-                ->withOptions(['allow_redirects' => false])
-                ->withOptions($this->requestOptions($endpoint))
-                ->get($url);
+            $response = $this->guardedRequest($url, $deadline);
+
+            $deadline->throwIfExpired();
 
             if (! $this->isRedirectStatus($response->status())) {
                 return $response;
@@ -170,70 +177,79 @@ final class LaravelSiteMonitorHttpClient implements SiteMonitorHttpClient
     }
 
     /**
-     * @return array{host: string, port: int, address: string}
+     * Sends one hop through Core's guarded client: it resolves the host through
+     * Core, refuses unless every address is public, pins the connection to the
+     * checked address and follows no redirects, so each hop is re-guarded here.
      */
-    private function endpoint(string $url): array
+    private function guardedRequest(string $url, SiteMonitorDeadline $deadline): Response
     {
-        $parts = parse_url($url);
+        $remaining = $deadline->remainingSeconds();
+        $policySeconds = max(1, (int) ceil($remaining));
+        $port = parse_url($url, PHP_URL_PORT);
+        $port = is_int($port) ? $port : (strtolower((string) parse_url($url, PHP_URL_SCHEME)) === 'http' ? 80 : 443);
 
-        throw_if(! is_array($parts), InvalidArgumentException::class, 'Target URL could not be parsed.');
-
-        $scheme = is_string($parts['scheme'] ?? null) ? strtolower($parts['scheme']) : null;
-        $host = GuardSiteMonitorOutboundUrlAction::run($url);
-
-        return [
-            'host' => $host,
-            'port' => $this->port($parts, $scheme),
-            'address' => $this->resolvedAddress($host),
-        ];
-    }
-
-    /**
-     * @param  array{host: string, port: int, address: string}  $endpoint
-     * @return array<string, mixed>
-     */
-    private function requestOptions(array $endpoint): array
-    {
-        throw_unless(defined('CURLOPT_RESOLVE'), InvalidArgumentException::class, 'Site monitor HTTP checks require cURL host pinning support.');
-
-        return [
-            'curl' => [
-                CURLOPT_RESOLVE => [$this->curlResolveEntry($endpoint)],
-            ],
-        ];
-    }
-
-    /**
-     * @param  array<string, mixed>  $parts
-     */
-    private function port(array $parts, ?string $scheme): int
-    {
-        $port = $parts['port'] ?? null;
-
-        if (is_int($port) && $port > 0 && $port <= 65535) {
-            return $port;
+        if (GuardSiteMonitorOutboundUrlAction::privateTargetsAreAllowed()) {
+            return $this->privateTargetRequest($url, $port, $remaining);
         }
 
-        return $scheme === 'http' ? 80 : 443;
+        try {
+            return OutboundHttp::guarded(new OutboundHttpPolicy(
+                schemes: ['https', 'http'],
+                ports: [$port],
+                maxBytes: self::MAX_RESPONSE_BYTES,
+                connectTimeoutSeconds: $policySeconds,
+                timeoutSeconds: $policySeconds,
+            ))
+                // The shared deadline is fractional; the policy only takes whole seconds.
+                ->timeout($remaining)
+                ->connectTimeout($remaining)
+                ->get($url);
+        } catch (OutboundRequestRefusedException $exception) {
+            throw SiteMonitorOutboundRefusal::toUnsafeTarget($exception);
+        }
     }
 
     /**
-     * Resolve once, guard every returned address, and pin cURL to the first
-     * guarded address so DNS cannot be re-answered between check and connect.
+     * Operators who enable allow_private_targets (never in production) monitor
+     * internal sites on purpose, which Core's guarded client always refuses. This
+     * hop is pinned to the site monitor resolver's address instead, follows no
+     * redirects and keeps the same download limit.
      */
-    private function resolvedAddress(string $host): string
+    private function privateTargetRequest(string $url, int $port, float $remaining): Response
     {
-        return ResolveSiteMonitorSocketAddressAction::run($host);
-    }
+        $host = GuardSiteMonitorOutboundUrlAction::run($url);
+        $address = ResolveSiteMonitorSocketAddressAction::run($host);
+        $pinnedAddress = str_contains($address, ':') ? '[' . $address . ']' : $address;
 
-    /**
-     * @param  array{host: string, port: int, address: string}  $endpoint
-     */
-    private function curlResolveEntry(array $endpoint): string
-    {
-        $address = str_contains($endpoint['address'], ':') ? '[' . $endpoint['address'] . ']' : $endpoint['address'];
+        try {
+            $response = Http::timeout($remaining)
+                ->connectTimeout($remaining)
+                ->withoutRedirecting()
+                ->withOptions([
+                    'curl' => [CURLOPT_RESOLVE => [sprintf('%s:%d:%s', $host, $port, $pinnedAddress)]],
+                    'on_headers' => static function (ResponseInterface $headers): void {
+                        $length = $headers->getHeaderLine('Content-Length');
 
-        return sprintf('%s:%d:%s', $endpoint['host'], $endpoint['port'], $address);
+                        if (ctype_digit($length) && (int) $length > self::MAX_RESPONSE_BYTES) {
+                            throw new UnsafeSiteMonitorTargetException('response_too_large', 'Target response exceeded the download limit.');
+                        }
+                    },
+                ])
+                ->get($url);
+        } catch (Throwable $exception) {
+            // Guzzle wraps an exception thrown from on_headers; surface the size refusal.
+            for ($current = $exception; $current instanceof Throwable; $current = $current->getPrevious()) {
+                throw_if($current instanceof UnsafeSiteMonitorTargetException, $current);
+            }
+
+            throw $exception;
+        }
+
+        if (strlen($response->body()) > self::MAX_RESPONSE_BYTES) {
+            throw new UnsafeSiteMonitorTargetException('response_too_large', 'Target response exceeded the download limit.');
+        }
+
+        return $response;
     }
 
     private function integerConfig(string $key, int $default): int

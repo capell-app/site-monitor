@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Capell\SiteMonitor\Filament\Resources\SiteMonitorIncidents;
 
 use BackedEnum;
+use Capell\Admin\Enums\NavigationGroupEnum;
 use Capell\Admin\Support\SiteScope;
 use Capell\Core\Facades\CapellCore;
 use Capell\SiteMonitor\Actions\OrderSiteMonitorTimestampsAction;
@@ -82,9 +83,9 @@ final class SiteMonitorIncidentResource extends Resource
     }
 
     #[Override]
-    public static function getNavigationGroup(): string
+    public static function getNavigationGroup(): NavigationGroupEnum
     {
-        return __('capell-admin::navigation.group_monitoring');
+        return NavigationGroupEnum::Reports;
     }
 
     #[Override]

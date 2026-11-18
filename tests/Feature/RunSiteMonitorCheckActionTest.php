@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use Capell\Core\Contracts\Security\ResolvesHostAddresses;
 use Capell\SiteMonitor\Actions\RunSiteMonitorCheckAction;
 use Capell\SiteMonitor\Contracts\SiteMonitorDomainExpiryClient;
+use Capell\SiteMonitor\Contracts\SiteMonitorHostResolver;
 use Capell\SiteMonitor\Contracts\SiteMonitorHttpClient;
 use Capell\SiteMonitor\Data\SiteMonitorCheckResultData;
 use Capell\SiteMonitor\Enums\SiteMonitorCheckType;
@@ -13,6 +15,7 @@ use Capell\SiteMonitor\Support\LaravelSiteMonitorHttpClient;
 use Capell\SiteMonitor\Support\RdapDomainExpiryClient;
 use Capell\SiteMonitor\Tests\Fixtures\FakeSiteMonitorDomainExpiryClient;
 use Capell\SiteMonitor\Tests\Fixtures\FakeSiteMonitorHttpClient;
+use Capell\SiteMonitor\Tests\Fixtures\SiteMonitorTargetFactory;
 use Carbon\CarbonImmutable;
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\Request;
@@ -216,19 +219,7 @@ it('rejects private RDAP endpoints without sending an HTTP request', function ()
  */
 function siteMonitorTarget(SiteMonitorCheckType $checkType, array $overrides = []): SiteMonitorTarget
 {
-    return SiteMonitorTarget::query()->create([
-        'name' => 'Example',
-        'url' => 'https://93.184.216.34',
-        'check_type' => $checkType,
-        'interval_minutes' => 5,
-        'timeout_ms' => 5000,
-        'failure_threshold' => 2,
-        'expected_status_minimum' => 200,
-        'expected_status_maximum' => 399,
-        'enabled' => true,
-        'current_state' => SiteMonitorState::Unknown,
-        ...$overrides,
-    ]);
+    return SiteMonitorTargetFactory::make($checkType, $overrides);
 }
 
 it('reports a legacy contradictory range as unknown configuration rather than an outage', function (): void {
@@ -242,4 +233,89 @@ it('reports a legacy contradictory range as unknown configuration rather than an
         ->and($result->errorType)->toBe('invalid_status_range')
         ->and($result->errorMessage)->toBe(__('capell-site-monitor::package.validation.repair_status_range'));
     Http::assertNothingSent();
+});
+
+/**
+ * The site monitor's own guard sees a public answer while the connection itself
+ * resolves through Core, as when DNS answers differently between check and connect.
+ *
+ * @param  array<string, list<string>>  $coreAnswers
+ */
+function siteMonitorSplitResolution(array $coreAnswers): void
+{
+    app()->instance(SiteMonitorHostResolver::class, new class implements SiteMonitorHostResolver
+    {
+        public function addresses(string $host): array
+        {
+            return ['93.184.216.34'];
+        }
+    });
+    app()->instance(ResolvesHostAddresses::class, new class($coreAnswers) implements ResolvesHostAddresses
+    {
+        /** @param array<string, list<string>> $answers */
+        public function __construct(private readonly array $answers) {}
+
+        public function resolve(string $host): array
+        {
+            return $this->answers[$host] ?? [];
+        }
+    });
+}
+
+it('sends nothing when a monitored host resolves to the cloud metadata address at connect time', function (): void {
+    siteMonitorSplitResolution(['monitor.example.com' => ['169.254.169.254']]);
+    Http::fake();
+
+    $result = (new LaravelSiteMonitorHttpClient)->check(siteMonitorTarget(SiteMonitorCheckType::HttpStatus, ['url' => 'https://monitor.example.com/health']));
+
+    expect($result->state)->toBe(SiteMonitorState::Failing)
+        ->and($result->errorType)->toBe('unsafe_target_address')
+        ->and($result->statusCode)->toBeNull();
+    Http::assertNothingSent();
+});
+
+it('does not follow a redirect from a public host to a host that resolves to loopback', function (): void {
+    siteMonitorSplitResolution([
+        'monitor.example.com' => ['93.184.216.34'],
+        'internal.example.com' => ['127.0.0.1'],
+    ]);
+    Http::fake([
+        'https://monitor.example.com/*' => Http::response('', 302, ['Location' => 'https://internal.example.com/admin']),
+        'https://internal.example.com/*' => Http::response('internal', 200),
+    ]);
+
+    $result = (new LaravelSiteMonitorHttpClient)->check(siteMonitorTarget(SiteMonitorCheckType::HttpStatus, ['url' => 'https://monitor.example.com/health']));
+
+    expect($result->state)->toBe(SiteMonitorState::Failing)
+        ->and($result->errorType)->toBe('unsafe_target_address')
+        ->and($result->redirectChain)->toBe(['https://internal.example.com/admin']);
+    Http::assertSentCount(1);
+    Http::assertNotSent(fn (Request $request): bool => str_contains($request->url(), 'internal.example.com'));
+});
+
+it('sends no RDAP lookup when the registry host resolves to the cloud metadata address at connect time', function (): void {
+    siteMonitorSplitResolution(['rdap.example.com' => ['169.254.169.254']]);
+    Http::fake();
+    config()->set('capell-site-monitor.rdap_endpoints', ['com' => 'https://rdap.example.com/domain/{domain}']);
+
+    expect((new RdapDomainExpiryClient)->expiresAt('example.com'))->toBeNull();
+    Http::assertNothingSent();
+});
+
+it('checks a private target when private targets are allowed outside production', function (): void {
+    config()->set('capell-site-monitor.allow_private_targets', true);
+    app()->instance(SiteMonitorHostResolver::class, new class implements SiteMonitorHostResolver
+    {
+        public function addresses(string $host): array
+        {
+            return ['10.0.0.5'];
+        }
+    });
+    Http::fake(['https://intranet.example.com/*' => Http::response('ok', 200)]);
+
+    $result = (new LaravelSiteMonitorHttpClient)->check(siteMonitorTarget(SiteMonitorCheckType::HttpStatus, ['url' => 'https://intranet.example.com/health']));
+
+    expect($result->state)->toBe(SiteMonitorState::Passing)
+        ->and($result->statusCode)->toBe(200);
+    Http::assertSentCount(1);
 });

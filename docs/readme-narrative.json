@@ -1,21 +1,4 @@
 {
-    "whatThisPluginAdds": {
-        "text": "Site Monitor records HTTP availability, certificate expiry, domain expiry and incidents inside Capell admin, with checks running from your application host. It is a free first-party package with Stable maturity. Check the release catalogue for the verification and availability of the version you plan to install.",
-        "evidence": [
-            "capell.json",
-            "src/Enums/SiteMonitorCheckType.php",
-            "src/Actions/RunSiteMonitorCheckAction.php"
-        ]
-    },
-    "surfaceOutcome": {
-        "text": "The package supplies a health dashboard, target and incident resources, scheduled checks and queue jobs. Installation requires current release evidence and host verification; configure the scheduler, queue worker and notification integration before relying on its alerts.",
-        "evidence": [
-            "capell.json",
-            "src/Manifest/SiteMonitorDashboardPageContribution.php",
-            "src/Manifest/SiteMonitorScheduledChecksContribution.php",
-            "tests/Unit/ManifestRequirementsTest.php"
-        ]
-    },
     "whyItMatters": {
         "developers": {
             "text": "Run checks outside the public render path, inspect typed results, connect incident events to your alerting system and retain operator-owned target settings during automatic discovery.",
@@ -24,14 +7,6 @@
                 "src/Actions/RunSiteMonitorCheckAction.php",
                 "src/Jobs/RunSiteMonitorTargetJob.php",
                 "tests/Feature/RunSiteMonitorCheckActionTest.php"
-            ]
-        },
-        "teams": {
-            "text": "Review failing targets and expiry warnings alongside other site operations. A check runs from your application host, not an independent monitoring network; retain independent monitoring for outages that also stop that host.",
-            "evidence": [
-                "capell.json",
-                "src/Actions/BuildSiteMonitorDashboardAction.php",
-                "tests/Feature/Admin/SiteMonitorAdminSurfaceTest.php"
             ]
         }
     }

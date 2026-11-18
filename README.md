@@ -2,27 +2,25 @@
 
 <!-- prettier-ignore-start -->
 
-## What It Does
+The Site monitor dashboard counts how many of your listed web addresses are passing, showing a warning or failing. Each address you add is called a target, and your own server checks it every five minutes by default. The checks run as background jobs, which your host or developer must have running. Only global administrators see the dashboard, and the Monitor targets list shows each target's latest result.
 
-Site Monitor records HTTP availability, certificate expiry, domain expiry and incidents inside Capell admin, with checks running from your application host. It is a free first-party package with Stable maturity. Check the release catalogue for the verification and availability of the version you plan to install.
+There are three kinds of check. A page check passes when the site answers with a status you choose, and anything slower than one and a half seconds shows as a warning. A certificate check warns 30 days before expiry. A domain check looks the domain up in its public registration record and warns 45 days before renewal, for .com, .org, .co.uk and a few other common endings.
+
+By default, two failed checks in a row on a target open an incident, which is a logged outage, and the next passing check closes it. Staff can also close or reopen one by hand. Warnings never open incidents, and nobody is emailed or messaged. Results are kept for 30 days, and logged outages are listed under Monitor incidents.
 
 - **Price and availability:** Check current availability and price on the [Capell Marketplace listing](https://capell.app/extensions/site-monitor).
 - **Licence:** Check the licence terms on the [Capell Marketplace listing](https://capell.app/extensions/site-monitor).
 - **Requires:** `PHP ^8.4`, `capell-app/admin ^1.0.71`, `capell-app/core ^1.0.76`, `capell-app/discovery-foundation ^1.0`, `capell-app/frontend ^1.0`, `filament/filament ^5.7.6`, `filament/support ^5.7.6`, `laravel/framework ^12.61.1|^13.12.0`, `lorisleiva/laravel-actions ^2.8`, `spatie/laravel-data ^4.5`, `spatie/laravel-package-tools ^1.14.1`.
 - **Install:** `composer require capell-app/site-monitor`.
 
-The package supplies a health dashboard, target and incident resources, scheduled checks and queue jobs. Installation requires current release evidence and host verification; configure the scheduler, queue worker and notification integration before relying on its alerts.
-
-## Who It Is For
-
-**For developers:** Run checks outside the public render path, inspect typed results, connect incident events to your alerting system and retain operator-owned target settings during automatic discovery.
-
-**For teams:** Review failing targets and expiry warnings alongside other site operations. A check runs from your application host, not an independent monitoring network; retain independent monitoring for outages that also stop that host.
-
 ## Quick Start
 
 1. Install the package: `composer require capell-app/site-monitor`.
 2. Open the package admin page or resource and verify Site Monitor is available.
+
+## For Developers
+
+Run checks outside the public render path, inspect typed results, connect incident events to your alerting system and retain operator-owned target settings during automatic discovery.
 
 ## Configure
 
@@ -92,6 +90,6 @@ Read [CHANGELOG.md](CHANGELOG.md) before upgrading.
 - [Capell content language plan](../../docs/CONTENT_LANGUAGE_PLAN.md)
 - [Capell documentation design system](../../docs/DESIGN_SYSTEM.md)
 - [Capell and package ERD notes](../../docs/erd/capell-and-package-erds.md)
-- Related packages: [Discovery Core](../discovery-foundation/README.md), [Diagnostics](../diagnostics/README.md), [Email Studio](../email-studio/README.md), [Exception Reports](../exception-reports/README.md), [SEO Suite](../seo-suite/README.md), [Site Discovery](../site-discovery/README.md), [URL Manager](../url-manager/README.md).
+- Related packages: [Discovery Foundation](../discovery-foundation/README.md), [Diagnostics](../diagnostics/README.md), [Email Studio](../email-studio/README.md), [Exception Reports](../exception-reports/README.md), [SEO Checks](../seo-suite/README.md), [Site Discovery](../site-discovery/README.md), [Redirects](../url-manager/README.md).
 
 <!-- prettier-ignore-end -->

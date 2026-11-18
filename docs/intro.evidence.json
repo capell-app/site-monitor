@@ -1,0 +1,124 @@
+[
+    {
+        "claim": "Listed web addresses are checked from your own server every five minutes by default",
+        "evidence": [
+            "config/capell-site-monitor.php",
+            "src/Support/LaravelSiteMonitorHttpClient.php",
+            "src/Actions/RecordSiteMonitorRunAction.php",
+            "src/Actions/ResolveSiteMonitorTargetsAction.php"
+        ]
+    },
+    {
+        "claim": "The Site monitor dashboard counts how many of the listed web addresses are passing, showing a warning or failing.",
+        "evidence": [
+            "src/Actions/BuildSiteMonitorDashboardAction.php",
+            "src/Data/SiteMonitorDashboardData.php",
+            "resources/views/filament/pages/site-monitor-dashboard.blade.php"
+        ]
+    },
+    {
+        "claim": "Each address you add is called a target",
+        "evidence": [
+            "src/Models/SiteMonitorTarget.php",
+            "src/Filament/Resources/SiteMonitorTargets/SiteMonitorTargetResource.php",
+            "resources/lang/en/package.php"
+        ]
+    },
+    {
+        "claim": "The checks run as background jobs, which your host or developer must have running (a scheduled run command dispatches a job per target).",
+        "evidence": [
+            "src/Providers/SiteMonitorServiceProvider.php",
+            "src/Console/Commands/RunSiteMonitorCommand.php",
+            "src/Actions/RunDueSiteMonitorChecksAction.php",
+            "src/Jobs/RunSiteMonitorTargetJob.php"
+        ]
+    },
+    {
+        "claim": "Only global administrators see the dashboard",
+        "evidence": ["src/Filament/Pages/SiteMonitorDashboardPage.php"]
+    },
+    {
+        "claim": "The Monitor targets list shows each target's latest result",
+        "evidence": [
+            "src/Filament/Resources/SiteMonitorTargets/SiteMonitorTargetResource.php",
+            "resources/lang/en/package.php"
+        ]
+    },
+    {
+        "claim": "There are three kinds of check: page, certificate and domain",
+        "evidence": [
+            "src/Enums/SiteMonitorCheckType.php",
+            "src/Actions/RunSiteMonitorCheckAction.php"
+        ]
+    },
+    {
+        "claim": "A page check passes when the site answers with a status you choose; slower than 1.5 seconds is a warning",
+        "evidence": [
+            "src/Actions/RunSiteMonitorCheckAction.php",
+            "config/capell-site-monitor.php",
+            "src/Filament/Resources/SiteMonitorTargets/SiteMonitorTargetResource.php"
+        ]
+    },
+    {
+        "claim": "A certificate check warns 30 days before expiry",
+        "evidence": [
+            "config/capell-site-monitor.php",
+            "src/Actions/RunSiteMonitorCheckAction.php",
+            "src/Actions/ReadSiteMonitorCertificateAction.php"
+        ]
+    },
+    {
+        "claim": "A domain check looks the domain up in its public registration record and warns 45 days before renewal, for .com, .org, .co.uk and a few other endings",
+        "evidence": [
+            "config/capell-site-monitor.php",
+            "src/Support/RdapDomainExpiryClient.php",
+            "src/Actions/ResolveRdapEndpointAction.php",
+            "src/Actions/RunSiteMonitorCheckAction.php"
+        ]
+    },
+    {
+        "claim": "By default two failed checks in a row on a target open an incident, and the next passing check closes it",
+        "evidence": [
+            "config/capell-site-monitor.php",
+            "src/Actions/RecordSiteMonitorRunAction.php",
+            "src/Actions/ReconcileSiteMonitorIncidentAction.php"
+        ]
+    },
+    {
+        "claim": "Staff can close or reopen an incident by hand",
+        "evidence": [
+            "src/Filament/Resources/SiteMonitorIncidents/Pages/EditSiteMonitorIncident.php",
+            "src/Actions/TransitionSiteMonitorIncidentAction.php",
+            "src/Policies/SiteMonitorIncidentPolicy.php"
+        ]
+    },
+    {
+        "claim": "Warnings never open incidents",
+        "evidence": ["src/Actions/ReconcileSiteMonitorIncidentAction.php"]
+    },
+    {
+        "claim": "Nobody is emailed or messaged: incident events are dispatched with no listener",
+        "evidence": [
+            "src/Actions/ReconcileSiteMonitorIncidentAction.php",
+            "src/Events/SiteMonitorIncidentOpened.php",
+            "src/Events/SiteMonitorIncidentResolved.php",
+            "src/Providers/SiteMonitorServiceProvider.php"
+        ]
+    },
+    {
+        "claim": "Results are kept for 30 days",
+        "evidence": [
+            "config/capell-site-monitor.php",
+            "src/Actions/PruneSiteMonitorRunsAction.php",
+            "src/Console/Commands/RunSiteMonitorCommand.php"
+        ]
+    },
+    {
+        "claim": "Logged outages are listed under Monitor incidents",
+        "evidence": [
+            "src/Filament/Resources/SiteMonitorIncidents/SiteMonitorIncidentResource.php",
+            "src/Models/SiteMonitorIncident.php",
+            "resources/lang/en/package.php"
+        ]
+    }
+]

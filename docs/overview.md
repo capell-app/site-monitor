@@ -2,6 +2,12 @@
 
 <!-- prettier-ignore-start -->
 
+The Site monitor dashboard counts how many of your listed web addresses are passing, showing a warning or failing. Each address you add is called a target, and your own server checks it every five minutes by default. The checks run as background jobs, which your host or developer must have running. Only global administrators see the dashboard, and the Monitor targets list shows each target's latest result.
+
+There are three kinds of check. A page check passes when the site answers with a status you choose, and anything slower than one and a half seconds shows as a warning. A certificate check warns 30 days before expiry. A domain check looks the domain up in its public registration record and warns 45 days before renewal, for .com, .org, .co.uk and a few other common endings.
+
+By default, two failed checks in a row on a target open an incident, which is a logged outage, and the next passing check closes it. Staff can also close or reopen one by hand. Warnings never open incidents, and nobody is emailed or messaged. Results are kept for 30 days, and logged outages are listed under Monitor incidents.
+
 # Site Monitor
 
 Site Monitor brings public HTTP availability, certificate expiry, domain expiry and incident history into Capell admin. Operators can configure targets, queue checks, inspect failures and record incident resolution without putting probes in the public page-rendering path.

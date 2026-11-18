@@ -6,7 +6,7 @@ Developer reference for `capell-app/site-monitor`. Start with the [README](../RE
 
 ## Package Details
 
-Site Monitor is an **Available**, **Schema-owning** Capell package in the **Capell Operations** product group. It ships as `capell-app/site-monitor` and extends these surfaces: admin, console, shared.
+Site Monitor is an **Available** Capell package in the **Capell Operations** product group. It ships as `capell-app/site-monitor` and extends these surfaces: admin, console, shared.
 
 - Status: Available
 - Tier: free
@@ -80,6 +80,7 @@ Site Monitor is an **Available**, **Schema-owning** Capell package in the **Cape
 - `OrderSiteMonitorTimestampsAction`
 - `PruneSiteMonitorRunsAction`
 - `QueueSiteMonitorTargetCheckAction`
+- `ReadSiteMonitorCertificateAction`
 - `ReconcileSiteMonitorIncidentAction`
 - `RecordSiteMonitorRunAction`
 - `ResolveRdapEndpointAction`

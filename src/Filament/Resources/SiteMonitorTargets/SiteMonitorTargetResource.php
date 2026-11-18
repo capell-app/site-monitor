@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Capell\SiteMonitor\Filament\Resources\SiteMonitorTargets;
 
 use BackedEnum;
+use Capell\Admin\Enums\NavigationGroupEnum;
 use Capell\Admin\Support\SiteScope;
 use Capell\Core\Facades\CapellCore;
 use Capell\Core\Models\Site;
@@ -18,6 +19,7 @@ use Capell\SiteMonitor\Filament\Resources\SiteMonitorTargets\Pages\EditSiteMonit
 use Capell\SiteMonitor\Filament\Resources\SiteMonitorTargets\Pages\ListSiteMonitorTargets;
 use Capell\SiteMonitor\Models\SiteMonitorTarget;
 use Capell\SiteMonitor\Providers\SiteMonitorServiceProvider;
+use Capell\SiteMonitor\Support\SiteMonitorTimeout;
 use Filament\Actions\Action;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Select;
@@ -60,7 +62,7 @@ final class SiteMonitorTargetResource extends Resource
                     Select::make('site_id')->label(__('capell-site-monitor::package.fields.site_id'))->options(self::siteOptions(...))->searchable()->required(fn (): bool => ! SiteAccess::current()->isGlobal()),
                     TextInput::make('language_id')->label(__('capell-site-monitor::package.fields.language_id'))->numeric(),
                     TextInput::make('interval_minutes')->label(__('capell-site-monitor::package.fields.interval_minutes'))->numeric()->required()->minValue(1)->default(self::integerConfig('capell-site-monitor.default_interval_minutes', 5)),
-                    TextInput::make('timeout_ms')->label(__('capell-site-monitor::package.fields.timeout_ms'))->numeric()->required()->minValue(100)->default(self::integerConfig('capell-site-monitor.default_timeout_ms', 5000)),
+                    TextInput::make('timeout_ms')->label(__('capell-site-monitor::package.fields.timeout_ms'))->numeric()->required()->minValue(SiteMonitorTimeout::MINIMUM_MS)->maxValue(SiteMonitorTimeout::maximumMs())->default(min(self::integerConfig('capell-site-monitor.default_timeout_ms', 5000), SiteMonitorTimeout::maximumMs())),
                     TextInput::make('failure_threshold')->label(__('capell-site-monitor::package.fields.failure_threshold'))->numeric()->required()->minValue(1)->default(self::integerConfig('capell-site-monitor.default_failure_threshold', 2)),
                     TextInput::make('expected_status_minimum')->label(__('capell-site-monitor::package.fields.expected_status_minimum'))->numeric()->required()->minValue(100)->maxValue(599)->default(200)->visible(fn (Get $get): bool => $get('check_type') === SiteMonitorCheckType::HttpStatus->value),
                     TextInput::make('expected_status_maximum')->label(__('capell-site-monitor::package.fields.expected_status_maximum'))->numeric()->required()->minValue(100)->maxValue(599)->default(399)->gte('expected_status_minimum')->validationMessages(['gte' => __('capell-site-monitor::package.validation.status_range')])->helperText(__('capell-site-monitor::package.validation.status_range'))->visible(fn (Get $get): bool => $get('check_type') === SiteMonitorCheckType::HttpStatus->value),
@@ -105,9 +107,9 @@ final class SiteMonitorTargetResource extends Resource
     }
 
     #[Override]
-    public static function getNavigationGroup(): string
+    public static function getNavigationGroup(): NavigationGroupEnum
     {
-        return __('capell-admin::navigation.group_monitoring');
+        return NavigationGroupEnum::Reports;
     }
 
     #[Override]

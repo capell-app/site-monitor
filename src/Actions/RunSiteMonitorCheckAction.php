@@ -11,11 +11,11 @@ use Capell\SiteMonitor\Enums\SiteMonitorCheckType;
 use Capell\SiteMonitor\Enums\SiteMonitorState;
 use Capell\SiteMonitor\Exceptions\UnsafeSiteMonitorTargetException;
 use Capell\SiteMonitor\Models\SiteMonitorTarget;
+use Capell\SiteMonitor\Support\SiteMonitorDeadline;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\Client\ConnectionException;
 use Lorisleiva\Actions\Concerns\AsFake;
 use Lorisleiva\Actions\Concerns\AsObject;
-use OpenSSLCertificate;
-use Throwable;
 
 final class RunSiteMonitorCheckAction
 {
@@ -96,6 +96,8 @@ final class RunSiteMonitorCheckAction
 
     private function checkSslCertificate(SiteMonitorTarget $target): SiteMonitorCheckResultData
     {
+        $deadline = new SiteMonitorDeadline($target->timeout_ms);
+
         try {
             $host = GuardSiteMonitorOutboundUrlAction::run($target->url);
             $address = ResolveSiteMonitorSocketAddressAction::run($host);
@@ -103,13 +105,34 @@ final class RunSiteMonitorCheckAction
             return $this->expiryFailure($unsafeSiteMonitorTargetException->errorType, $unsafeSiteMonitorTargetException->getMessage());
         }
 
-        $expiresAt = $this->sslCertificateExpiresAt($host, $address, $target->timeout_ms);
+        $port = parse_url(trim($target->url), PHP_URL_PORT);
+        $port = is_int($port) && $port > 0 && $port <= 65535 ? $port : 443;
 
-        if (! $expiresAt instanceof CarbonImmutable) {
+        try {
+            $certificate = $this->inspectSslCertificate($host, $address, $port, $deadline);
+            $deadline->throwIfExpired();
+        } catch (ConnectionException) {
+            return $this->expiryFailure('timeout', 'The site monitor network deadline was exceeded.');
+        }
+
+        if ($certificate === null) {
             return $this->expiryFailure('ssl_certificate_unavailable', 'SSL certificate expiry could not be resolved.');
         }
 
-        return $this->expiryResult($expiresAt, $this->integerConfig('capell-site-monitor.ssl_expiry_warning_days', 30));
+        $result = $this->expiryResult($certificate['expiresAt'], $this->integerConfig('capell-site-monitor.ssl_expiry_warning_days', 30));
+
+        if (! $certificate['trusted'] && $result->state !== SiteMonitorState::Failing) {
+            return new SiteMonitorCheckResultData(
+                state: SiteMonitorState::Failing,
+                statusCode: null,
+                responseMs: null,
+                expiresAt: $certificate['expiresAt'],
+                errorType: 'ssl_certificate_untrusted',
+                errorMessage: sprintf('The certificate for "%s" is not trusted for this host: its chain or host name did not verify.', $host),
+            );
+        }
+
+        return $result;
     }
 
     private function checkDomainExpiry(SiteMonitorTarget $target): SiteMonitorCheckResultData
@@ -184,58 +207,32 @@ final class RunSiteMonitorCheckAction
         );
     }
 
-    private function sslCertificateExpiresAt(string $host, string $address, int $timeoutMs): ?CarbonImmutable
+    /**
+     * Connects with full verification first. When that fails the certificate is read once
+     * more without verification, so an untrusted, mismatched or expired certificate is
+     * reported with its expiry rather than as an unreachable host.
+     *
+     * @return array{expiresAt: CarbonImmutable, trusted: bool}|null
+     */
+    private function inspectSslCertificate(string $host, string $address, int $port, SiteMonitorDeadline $deadline): ?array
     {
-        $context = stream_context_create([
-            'ssl' => [
-                'capture_peer_cert' => true,
-                'peer_name' => $host,
-                'SNI_enabled' => true,
-                'verify_peer' => false,
-                'verify_peer_name' => false,
-            ],
-        ]);
+        $failure = '';
+        $expiresAt = ReadSiteMonitorCertificateAction::make()->handle($host, $address, $port, $deadline, true, $failure);
 
-        try {
-            $client = @stream_socket_client(
-                sprintf('ssl://%s:443', str_contains($address, ':') ? '[' . $address . ']' : $address),
-                $errorCode,
-                $errorMessage,
-                max(1, (int) ceil($timeoutMs / 1000)),
-                STREAM_CLIENT_CONNECT,
-                $context,
-            );
-        } catch (Throwable) {
+        if ($expiresAt instanceof CarbonImmutable) {
+            return ['expiresAt' => $expiresAt, 'trusted' => true];
+        }
+
+        // Only a verification failure means the certificate is untrusted. A timeout or reset on
+        // the first connect says nothing about the certificate, so it is not retried as such.
+        if (! str_contains(strtolower($failure), 'verif') && ! preg_match('/(?:Peer certificate (?:CN=.* did not match expected CN=|SANs? .*did not match)|Unable to locate peer certificate CN)/i', $failure)) {
             return null;
         }
 
-        if (! is_resource($client)) {
-            return null;
-        }
+        $deadline->throwIfExpired();
+        $expiresAt = ReadSiteMonitorCertificateAction::make()->handle($host, $address, $port, $deadline, false, $failure);
 
-        $parameters = stream_context_get_params($client);
-        fclose($client);
-
-        $options = $parameters['options'];
-        $sslOptions = $options['ssl'] ?? null;
-
-        if (! is_array($sslOptions)) {
-            return null;
-        }
-
-        $certificate = $sslOptions['peer_certificate'] ?? null;
-
-        if (! $certificate instanceof OpenSSLCertificate && ! is_string($certificate)) {
-            return null;
-        }
-
-        $parsed = openssl_x509_parse($certificate);
-
-        if (! is_array($parsed) || ! isset($parsed['validTo_time_t']) || ! is_numeric($parsed['validTo_time_t'])) {
-            return null;
-        }
-
-        return CarbonImmutable::createFromTimestamp((int) $parsed['validTo_time_t']);
+        return $expiresAt instanceof CarbonImmutable ? ['expiresAt' => $expiresAt, 'trusted' => false] : null;
     }
 
     private function integerConfig(string $key, int $default): int

@@ -6,7 +6,7 @@
     "kind": "package",
     "capellApiVersion": "^1.0",
     "version": "1.0.0",
-    "description": "Availability, certificate expiry, domain expiry, and incident monitoring from your Capell application host.",
+    "description": "Checks the web addresses you list for status, slow responses, certificate expiry and domain renewal, with a dashboard and a log of outages.",
     "product": {
         "group": "Capell Operations",
         "tier": "free",
@@ -144,18 +144,7 @@
         "View:SiteMonitorIncident",
         "Update:SiteMonitorIncident"
     ],
-    "capabilities": [
-        "site-monitor",
-        "uptime-monitoring",
-        "ssl-expiry-monitoring",
-        "domain-expiry-monitoring",
-        "expanded-rdap-domain-expiry",
-        "dashboard-query-budget",
-        "incident-tracking",
-        "incident-notification-events",
-        "scheduled-checks",
-        "operations-admin"
-    ],
+    "capabilities": [],
     "security": {
         "riskTier": "standard",
         "publicSurface": {
@@ -185,9 +174,11 @@
             "requiresTimeouts": true,
             "requiresSecretRedaction": true,
             "clients": [
+                "Capell\\SiteMonitor\\Actions\\ReadSiteMonitorCertificateAction",
                 "Capell\\SiteMonitor\\Actions\\RunSiteMonitorCheckAction",
                 "Capell\\SiteMonitor\\Support\\LaravelSiteMonitorHttpClient",
-                "Capell\\SiteMonitor\\Support\\RdapDomainExpiryClient"
+                "Capell\\SiteMonitor\\Support\\RdapDomainExpiryClient",
+                "Capell\\SiteMonitor\\Support\\SiteMonitorDeadline"
             ]
         },
         "adminSurface": {
@@ -251,29 +242,33 @@
         "privateDocsRequested": false
     },
     "marketplace": {
-        "summary": "Availability and expiry checks with incident history in Capell admin.",
-        "description": "Site Monitor checks public URLs, SSL certificates, and domain expiry from scheduled jobs outside the public render path, then records runs and incidents for operators inside Capell admin.",
-        "problem": "Our operators may miss an outage or an expiring certificate until visitors report it.",
-        "outcome": "Our operators have availability and expiry records with incident history.",
+        "summary": "See which addresses are passing, slow or failing, and which certificates and domains are close to expiry, with every outage logged in the admin.",
+        "description": "Keep watch on the public addresses of your sites. Choose a page, certificate or domain check for each, set how often it runs and what status counts as a pass, and see the latest result for every target in one list. Repeated failures are logged as incidents that close when the check passes again, and permissions follow each person's assigned sites.",
+        "problem": "Operators can miss an outage or an expiring certificate until visitors report it.",
+        "outcome": "The Monitor targets list shows which addresses failed, slowed or are near expiry, and outages are logged as incidents.",
         "faq": [
             {
-                "question": "Where do monitoring checks run from?",
-                "answer": "Checks run from the Capell application host, not an independent monitoring network."
+                "question": "Where do the checks run from?",
+                "answer": "From your own server, not from an independent monitoring network. They run as background jobs, which your host or developer must have running."
             },
             {
-                "question": "What must be running for alerts?",
-                "answer": "Configure the scheduler, queue worker and notification integration before relying on alerts."
+                "question": "Will it email or message me when a site goes down?",
+                "answer": "No. Nobody is emailed or messaged. Two failed checks in a row open an incident by default, which is a logged outage listed under Monitor incidents."
             },
             {
-                "question": "Is Site Monitor a paid package?",
-                "answer": "Site Monitor is a free first-party package."
+                "question": "Who can see the dashboard?",
+                "answer": "Only global administrators see the Site monitor dashboard, which counts how many targets are passing, showing a warning or failing."
+            },
+            {
+                "question": "What does it check besides the page itself?",
+                "answer": "A certificate check warns 30 days before expiry. A domain check looks the domain up in its public registration record and warns 45 days before renewal, for .com, .org, .co.uk and a few other common endings."
             }
         ],
         "screenshots": [
             {
                 "path": "docs/screenshots/site-monitor-target-form.png",
-                "alt": "Site Monitor target settings in Capell admin",
-                "caption": "Configure the target URL, check type, interval and failure threshold."
+                "alt": "Edit form for a monitor target with a name, address, HTTP status check type, five-minute interval and expected status range",
+                "caption": "Set how often a target is checked and which responses count as passing."
             }
         ],
         "categories": ["operations", "monitoring", "admin"]
