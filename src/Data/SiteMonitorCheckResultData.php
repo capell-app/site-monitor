@@ -23,6 +23,7 @@ final class SiteMonitorCheckResultData extends Data
         public readonly ?string $errorMessage,
         public readonly array $redirectChain = [],
         public readonly array $metadata = [],
+        public readonly ?string $body = null,
     ) {}
 
     public function isFailure(): bool

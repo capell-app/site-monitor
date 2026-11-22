@@ -9,3 +9,5 @@ Status: Available. These docs describe implemented package behaviour plus remain
 | [Admin Guide](admin-guide.md)           | Configure monitors and review site health alerts.                       |
 | [Overview](overview.md)                 | Operator value, runtime behaviour, setup, safety, and screenshot notes. |
 | [Screenshot manifest](screenshots.json) | Marketplace and docs screenshot capture contract.                       |
+
+See [Incident alert delivery](alerts.md) for email, Slack and webhook configuration, payloads and delivery limits.

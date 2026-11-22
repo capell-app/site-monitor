@@ -10,7 +10,7 @@ Checks run from your application host through its scheduler and queue. HTTP chec
 
 Private or reserved destinations are rejected by default. Pausing a discovered target preserves the operator's settings and recorded state. Certificate probes use a validated network address while retaining the original hostname for TLS SNI.
 
-Incident events let a developer integrate notifications with the application's approved alerting system. They do not automatically provide email, SMS or on-call delivery. Keep independent external monitoring for failures that also stop this application host.
+Ask your developer to configure email, Slack or webhook incident alerts using the [alert delivery guide](alerts.md). Each configured destination receives opening and recovery alerts for every target. No alerts are sent until a destination is configured. Keep independent external monitoring for failures that also stop this application host.
 
 ## Adoption Checks
 

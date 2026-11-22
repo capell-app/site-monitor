@@ -106,7 +106,9 @@
                 "2026_06_13_000001_create_site_monitor_targets_table",
                 "2026_06_13_000002_create_site_monitor_runs_table",
                 "2026_06_13_000003_create_site_monitor_incidents_table",
-                "2026_10_04_000001_remove_implicit_timestamp_updates_from_site_monitor"
+                "2026_10_04_000001_remove_implicit_timestamp_updates_from_site_monitor",
+                "2026_11_20_000001_add_checks_windows_and_flapping_to_site_monitor_targets",
+                "2026_11_20_000002_add_alert_snooze_to_site_monitor_targets"
             ]
         }
     ],
@@ -174,10 +176,15 @@
             "requiresTimeouts": true,
             "requiresSecretRedaction": true,
             "clients": [
+                "Capell\\SiteMonitor\\Actions\\DeliverSiteMonitorIncidentWebhookAction",
+                "Capell\\SiteMonitor\\Actions\\GuardSiteMonitorOutboundUrlAction",
                 "Capell\\SiteMonitor\\Actions\\ReadSiteMonitorCertificateAction",
+                "Capell\\SiteMonitor\\Actions\\ResolveSiteMonitorSocketAddressAction",
                 "Capell\\SiteMonitor\\Actions\\RunSiteMonitorCheckAction",
+                "Capell\\SiteMonitor\\Contracts\\SiteMonitorHostResolverWithin",
                 "Capell\\SiteMonitor\\Support\\LaravelSiteMonitorHttpClient",
                 "Capell\\SiteMonitor\\Support\\RdapDomainExpiryClient",
+                "Capell\\SiteMonitor\\Support\\SiteMonitorAlertHttpFactory",
                 "Capell\\SiteMonitor\\Support\\SiteMonitorDeadline"
             ]
         },
@@ -253,7 +260,7 @@
             },
             {
                 "question": "Will it email or message me when a site goes down?",
-                "answer": "No. Nobody is emailed or messaged. Two failed checks in a row open an incident by default, which is a logged outage listed under Monitor incidents."
+                "answer": "Only once your developer sets alert addresses for the site. After that, each new incident and each recovery sends an email. Two failed checks in a row open an incident by default, which is a logged outage listed under Monitor incidents."
             },
             {
                 "question": "Who can see the dashboard?",

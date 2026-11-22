@@ -33,6 +33,12 @@ use Override;
  * @property int $failure_threshold
  * @property int $expected_status_minimum
  * @property int $expected_status_maximum
+ * @property string|null $expected_keyword
+ * @property int|null $max_response_ms
+ * @property CarbonImmutable|null $maintenance_starts_at
+ * @property CarbonImmutable|null $maintenance_ends_at
+ * @property bool $is_flapping
+ * @property CarbonImmutable|null $alerts_snoozed_until
  * @property bool $enabled
  * @property SiteMonitorState $current_state
  * @property int $consecutive_failures
@@ -66,6 +72,12 @@ final class SiteMonitorTarget extends Model
         'failure_threshold',
         'expected_status_minimum',
         'expected_status_maximum',
+        'expected_keyword',
+        'max_response_ms',
+        'maintenance_starts_at',
+        'maintenance_ends_at',
+        'is_flapping',
+        'alerts_snoozed_until',
         'enabled',
         'current_state',
         'consecutive_failures',
@@ -109,6 +121,21 @@ final class SiteMonitorTarget extends Model
             ->where('status', SiteMonitorIncidentStatus::Open->value);
     }
 
+    public function isInMaintenance(?CarbonImmutable $at = null): bool
+    {
+        $at ??= CarbonImmutable::now('UTC');
+
+        return $this->maintenance_starts_at !== null
+            && $this->maintenance_ends_at !== null
+            && $this->maintenance_starts_at->lessThanOrEqualTo($at)
+            && $this->maintenance_ends_at->greaterThan($at);
+    }
+
+    public function alertsAreSnoozed(): bool
+    {
+        return $this->alerts_snoozed_until !== null && $this->alerts_snoozed_until->greaterThan(CarbonImmutable::now('UTC'));
+    }
+
     #[Override]
     protected static function booted(): void
     {
@@ -128,6 +155,10 @@ final class SiteMonitorTarget extends Model
         return [
             'check_type' => SiteMonitorCheckType::class,
             'enabled' => 'boolean',
+            'is_flapping' => 'boolean',
+            'maintenance_starts_at' => 'immutable_datetime',
+            'maintenance_ends_at' => 'immutable_datetime',
+            'alerts_snoozed_until' => 'immutable_datetime',
             'current_state' => SiteMonitorState::class,
             'last_checked_at' => 'immutable_datetime',
             'next_check_at' => 'immutable_datetime',

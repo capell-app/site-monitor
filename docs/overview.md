@@ -6,7 +6,7 @@ The Site monitor dashboard counts how many of your listed web addresses are pass
 
 There are three kinds of check. A page check passes when the site answers with a status you choose, and anything slower than one and a half seconds shows as a warning. A certificate check warns 30 days before expiry. A domain check looks the domain up in its public registration record and warns 45 days before renewal, for .com, .org, .co.uk and a few other common endings.
 
-By default, two failed checks in a row on a target open an incident, which is a logged outage, and the next passing check closes it. Staff can also close or reopen one by hand. Warnings never open incidents, and nobody is emailed or messaged. Results are kept for 30 days, and logged outages are listed under Monitor incidents.
+By default, two failed checks in a row open an incident. A pass closes it. Staff can close or reopen it. Warnings open none. Page checks support keywords and response time limits. Maintenance records failures without opening incidents or sending alerts. Flapping triggers one alert. Your developer can configure email, Slack or webhook alerts and switch recovery alerts off. No destination means no alerts. Results stay 30 days and resolved outages a year by default, both configurable. Find outages under Monitor incidents.
 
 # Site Monitor
 
@@ -20,7 +20,7 @@ Checks run from your application host through its scheduler and queue. HTTP chec
 
 Private or reserved destinations are rejected by default. Pausing a discovered target preserves the operator's settings and recorded state. Certificate probes use a validated network address while retaining the original hostname for TLS SNI.
 
-Incident events let a developer integrate notifications with the application's approved alerting system. They do not automatically provide email, SMS or on-call delivery. Keep independent external monitoring for failures that also stop this application host.
+Ask your developer to configure email, Slack or webhook incident alerts using the [alert delivery guide](alerts.md). Each configured destination receives opening and recovery alerts for every target. No alerts are sent until a destination is configured. Keep independent external monitoring for failures that also stop this application host.
 
 ## Adoption Checks
 

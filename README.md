@@ -6,11 +6,11 @@ The Site monitor dashboard counts how many of your listed web addresses are pass
 
 There are three kinds of check. A page check passes when the site answers with a status you choose, and anything slower than one and a half seconds shows as a warning. A certificate check warns 30 days before expiry. A domain check looks the domain up in its public registration record and warns 45 days before renewal, for .com, .org, .co.uk and a few other common endings.
 
-By default, two failed checks in a row on a target open an incident, which is a logged outage, and the next passing check closes it. Staff can also close or reopen one by hand. Warnings never open incidents, and nobody is emailed or messaged. Results are kept for 30 days, and logged outages are listed under Monitor incidents.
+By default, two failed checks in a row open an incident. A pass closes it. Staff can close or reopen it. Warnings open none. Page checks support keywords and response time limits. Maintenance records failures without opening incidents or sending alerts. Flapping triggers one alert. Your developer can configure email, Slack or webhook alerts and switch recovery alerts off. No destination means no alerts. Results stay 30 days and resolved outages a year by default, both configurable. Find outages under Monitor incidents.
 
-- **Price and availability:** Check current availability and price on the [Capell Marketplace listing](https://capell.app/extensions/site-monitor).
-- **Licence:** Check the licence terms on the [Capell Marketplace listing](https://capell.app/extensions/site-monitor).
-- **Requires:** `PHP ^8.4`, `capell-app/admin ^1.0.71`, `capell-app/core ^1.0.76`, `capell-app/discovery-foundation ^1.0`, `capell-app/frontend ^1.0`, `filament/filament ^5.7.6`, `filament/support ^5.7.6`, `laravel/framework ^12.61.1|^13.12.0`, `lorisleiva/laravel-actions ^2.8`, `spatie/laravel-data ^4.5`, `spatie/laravel-package-tools ^1.14.1`.
+- **Price and availability:** Check current availability and price on the [Capell Marketplace listing](https://capell.app/marketplace/extensions/site-monitor).
+- **Licence:** Check the licence terms on the [Capell Marketplace listing](https://capell.app/marketplace/extensions/site-monitor).
+- **Requires:** `PHP ^8.4`, `capell-app/admin ^1.0.78`, `capell-app/core ^1.0.79`, `capell-app/discovery-foundation ^1.0`, `capell-app/frontend ^1.0`, `filament/filament ^5.7.6`, `filament/support ^5.7.6`, `laravel/framework ^12.61.1|^13.12.0`, `lorisleiva/laravel-actions ^2.8`, `spatie/laravel-data ^4.5`, `spatie/laravel-package-tools ^1.14.1`.
 - **Install:** `composer require capell-app/site-monitor`.
 
 ## Quick Start
@@ -29,7 +29,7 @@ Run checks outside the public render path, inspect typed results, connect incide
 
 ## Limits And Pitfalls
 
-- Install the required Capell packages at the versions in `composer.json`: `capell-app/admin ^1.0.71`, `capell-app/core ^1.0.76`, `capell-app/discovery-foundation ^1.0`, `capell-app/frontend ^1.0`.
+- Install the required Capell packages at the versions in `composer.json`: `capell-app/admin ^1.0.78`, `capell-app/core ^1.0.79`, `capell-app/discovery-foundation ^1.0`, `capell-app/frontend ^1.0`.
 - Run migrations before opening package resources or public routes.
 - Keep the host Laravel scheduler running so package-registered schedules can execute: `capell:site-monitor:run (everyMinute; package registered)`.
 - Custom write integrations must preserve invalidation for `site-monitor` cache tags.
@@ -58,7 +58,7 @@ Run checks outside the public render path, inspect typed results, connect incide
 - Database changes: package migrations are declared.
 - Config: `config/capell-site-monitor.php`.
 - Settings: no package settings declared.
-- Queues or schedules: scheduled commands `capell:site-monitor:run (everyMinute; package registered)`; queue jobs `RunSiteMonitorTargetJob`.
+- Queues or schedules: scheduled commands `capell:site-monitor:run (everyMinute; package registered)`; queue jobs `DeliverSiteMonitorIncidentAlertJob`, `RunSiteMonitorTargetJob`.
 - Cache tags: `site-monitor`.
 - Commands: `capell:site-monitor-screenshot-fixture`, `capell:site-monitor:doctor`, `capell:site-monitor:run`.
 

@@ -97,20 +97,50 @@
         "evidence": ["src/Actions/ReconcileSiteMonitorIncidentAction.php"]
     },
     {
-        "claim": "Nobody is emailed or messaged: incident events are dispatched with no listener",
+        "claim": "Page checks can fail for a missing keyword or a response slower than the target's limit",
+        "evidence": [
+            "src/Actions/RunSiteMonitorCheckAction.php",
+            "tests/Feature/SiteMonitorChecksAndWindowsTest.php"
+        ]
+    },
+    {
+        "claim": "During maintenance, failed checks are recorded without opening incidents or sending alerts",
+        "evidence": [
+            "src/Actions/RecordSiteMonitorRunAction.php",
+            "src/Actions/ReconcileSiteMonitorIncidentAction.php",
+            "tests/Feature/SiteMonitorChecksAndWindowsTest.php"
+        ]
+    },
+    {
+        "claim": "A flapping target alerts once when flapping starts, rather than on every flip",
+        "evidence": [
+            "src/Actions/DetectSiteMonitorFlappingAction.php",
+            "src/Actions/ReconcileSiteMonitorIncidentAction.php",
+            "tests/Feature/SiteMonitorChecksAndWindowsTest.php"
+        ]
+    },
+    {
+        "claim": "Configured email, Slack and webhook destinations receive new incidents and recoveries; recovery alerts can be disabled and empty destinations send nothing",
         "evidence": [
             "src/Actions/ReconcileSiteMonitorIncidentAction.php",
             "src/Events/SiteMonitorIncidentOpened.php",
             "src/Events/SiteMonitorIncidentResolved.php",
+            "src/Listeners/SendSiteMonitorIncidentAlertListener.php",
+            "src/Notifications/Channels/SiteMonitorSlackChannel.php",
+            "src/Notifications/Channels/SiteMonitorWebhookChannel.php",
+            "config/capell-site-monitor.php",
+            "tests/Feature/SiteMonitorIncidentAlertTest.php",
             "src/Providers/SiteMonitorServiceProvider.php"
         ]
     },
     {
-        "claim": "Results are kept for 30 days",
+        "claim": "Results are kept for 30 days and resolved incidents for 365 days by default, with both periods configurable",
         "evidence": [
             "config/capell-site-monitor.php",
             "src/Actions/PruneSiteMonitorRunsAction.php",
-            "src/Console/Commands/RunSiteMonitorCommand.php"
+            "src/Actions/PruneSiteMonitorIncidentsAction.php",
+            "src/Console/Commands/RunSiteMonitorCommand.php",
+            "tests/Feature/SiteMonitorIncidentLifecycleTest.php"
         ]
     },
     {

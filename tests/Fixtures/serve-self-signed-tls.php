@@ -4,7 +4,16 @@ declare(strict_types=1);
 
 // Serves a self-signed certificate on an ephemeral loopback port for a fixed number of
 // connections, printing the port first. Used to exercise the SSL check against a real handshake.
-[$script, $certificatePath, $connections, $mode] = $argv;
+$arguments = $_SERVER['argv'] ?? null;
+if (! is_array($arguments) || count($arguments) !== 4) {
+    throw new InvalidArgumentException('Usage: serve-self-signed-tls.php <certificate> <connections> <mode>');
+}
+
+[, $certificatePath, $connections, $mode] = $arguments;
+
+if (! is_string($certificatePath) || ! is_string($connections) || ! ctype_digit($connections) || ! is_string($mode)) {
+    throw new InvalidArgumentException('Usage: serve-self-signed-tls.php <certificate> <connections> <mode>');
+}
 
 $context = stream_context_create(['ssl' => [
     'local_cert' => $certificatePath,

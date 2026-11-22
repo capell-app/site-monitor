@@ -12,8 +12,26 @@ return [
     'max_redirects' => 5,
     'ssl_expiry_warning_days' => 30,
     'domain_expiry_warning_days' => 45,
+    // A target is flapping when its up/down state changed at least `flap_change_threshold`
+    // times within its last `flap_window_runs` runs. It alerts once, then stays quiet until it settles.
+    // Set `flap_window_runs` to 0 to switch flap detection off.
+    'flap_window_runs' => 10,
+    'flap_change_threshold' => 4,
     'run_retention_days' => 30,
+    // Resolved incidents are deleted after this many days; open incidents are kept. 0 keeps them all.
+    'incident_retention_days' => 365,
     'max_stale_minutes' => 30,
+    // Each configured channel receives incident opening and automatic recovery alerts.
+    // Leave a destination empty to disable that channel. HTTP destinations require public HTTPS.
+    'alerts' => [
+        'mail_to' => env('CAPELL_SITE_MONITOR_ALERT_MAIL_TO', ''),
+        'slack_url' => env('CAPELL_SITE_MONITOR_ALERT_SLACK_URL', ''),
+        'webhook_url' => env('CAPELL_SITE_MONITOR_ALERT_WEBHOOK_URL', ''),
+        'webhook_token' => env('CAPELL_SITE_MONITOR_ALERT_WEBHOOK_TOKEN', ''),
+        'notify_on_recovery' => env('CAPELL_SITE_MONITOR_ALERT_NOTIFY_ON_RECOVERY', true),
+        'http_timeout_seconds' => env('CAPELL_SITE_MONITOR_ALERT_HTTP_TIMEOUT_SECONDS', 5),
+        'queue_connection' => env('CAPELL_SITE_MONITOR_ALERT_QUEUE_CONNECTION'),
+    ],
     'schedule_enabled' => true,
     'site_discovery_auto_targets_enabled' => false,
     'rdap_timeout_ms' => 5000,

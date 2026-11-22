@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace Capell\SiteMonitor\Actions;
 
 use Capell\SiteMonitor\Contracts\SiteMonitorHostResolver;
+use Capell\SiteMonitor\Contracts\SiteMonitorHostResolverWithin;
 use Capell\SiteMonitor\Exceptions\UnsafeSiteMonitorTargetException;
+use Capell\SiteMonitor\Support\SiteMonitorDeadline;
 use Capell\SiteMonitor\Support\SiteMonitorNetworkAddressPolicy;
+use Illuminate\Http\Client\ConnectionException;
 use Lorisleiva\Actions\Concerns\AsFake;
 use Lorisleiva\Actions\Concerns\AsObject;
 
 /**
- * @method static string run(string $url)
+ * @method static string run(string $url, ?SiteMonitorDeadline $deadline = null)
  */
 final class GuardSiteMonitorOutboundUrlAction
 {
@@ -26,7 +29,10 @@ final class GuardSiteMonitorOutboundUrlAction
             && (bool) config('capell-site-monitor.allow_private_targets', false);
     }
 
-    public function handle(string $url): string
+    /**
+     * @throws ConnectionException when the deadline passes while the host resolves
+     */
+    public function handle(string $url, ?SiteMonitorDeadline $deadline = null): string
     {
         $parts = parse_url(trim($url));
 
@@ -46,12 +52,12 @@ final class GuardSiteMonitorOutboundUrlAction
             throw new UnsafeSiteMonitorTargetException('missing_target_host', 'Target URL does not contain a host.');
         }
 
-        $this->guardHost($host);
+        $this->guardHost($host, $deadline);
 
         return $host;
     }
 
-    private function guardHost(string $host): void
+    private function guardHost(string $host, ?SiteMonitorDeadline $deadline): void
     {
         if (self::privateTargetsAreAllowed()) {
             return;
@@ -61,7 +67,9 @@ final class GuardSiteMonitorOutboundUrlAction
             throw new UnsafeSiteMonitorTargetException('unsafe_target_host', 'Target host is local or internal.');
         }
 
-        $addresses = $this->resolver->addresses($host);
+        $addresses = $deadline instanceof SiteMonitorDeadline && $this->resolver instanceof SiteMonitorHostResolverWithin
+            ? $this->resolver->addressesWithin($host, $deadline)
+            : $this->resolver->addresses($host);
 
         if ($addresses === []) {
             throw new UnsafeSiteMonitorTargetException('target_host_unresolvable', 'Target host could not be resolved before the outbound check.');

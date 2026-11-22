@@ -29,6 +29,12 @@ final class ReconcileSiteMonitorIncidentAction
             return null;
         }
 
+        if ($run->state === SiteMonitorState::Failing && $target->isInMaintenance()) {
+            $incident = $target->openIncident()->first();
+
+            return $incident instanceof SiteMonitorIncident ? $incident : null;
+        }
+
         if ($run->state !== SiteMonitorState::Failing) {
             $incident = $target->openIncident()->first();
 
@@ -71,7 +77,10 @@ final class ReconcileSiteMonitorIncidentAction
             ],
         ]);
 
-        DB::afterCommit(static fn () => event(new SiteMonitorIncidentOpened($incident, $target, $run)));
+        // A flapping target alerts once for the flapping itself, not on every flip.
+        if (! $target->is_flapping) {
+            DB::afterCommit(static fn () => event(new SiteMonitorIncidentOpened($incident, $target, $run)));
+        }
 
         return $incident;
     }
@@ -90,6 +99,8 @@ final class ReconcileSiteMonitorIncidentAction
             'resolved_at' => CarbonImmutable::now('UTC'),
         ])->save();
 
-        DB::afterCommit(static fn () => event(new SiteMonitorIncidentResolved($incident, $target, $run)));
+        if (! $target->is_flapping) {
+            DB::afterCommit(static fn () => event(new SiteMonitorIncidentResolved($incident, $target, $run)));
+        }
     }
 }

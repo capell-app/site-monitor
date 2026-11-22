@@ -69,6 +69,40 @@ function registerSiteMonitorHostResolverAdapter(\Capell\SiteMonitor\Contracts\Si
 }
 ```
 
+## Contract `Capell\SiteMonitor\Contracts\SiteMonitorHostResolverWithin`
+
+<!-- example: contract Capell\SiteMonitor\Contracts\SiteMonitorHostResolverWithin -->
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace App\CapellExamples\SiteMonitor;
+
+final class SiteMonitorHostResolverWithinAdapter implements \Capell\SiteMonitor\Contracts\SiteMonitorHostResolverWithin
+{
+    public function __construct(private readonly \Capell\SiteMonitor\Contracts\SiteMonitorHostResolverWithin $backend) {}
+
+    #[\Override]
+    public function addresses(string $host): array
+    {
+        return $this->backend->addresses($host);
+    }
+
+    #[\Override]
+    public function addressesWithin(string $host, \Capell\SiteMonitor\Support\SiteMonitorDeadline $deadline): array
+    {
+        return $this->backend->addressesWithin($host, $deadline);
+    }
+}
+
+function registerSiteMonitorHostResolverWithinAdapter(\Capell\SiteMonitor\Contracts\SiteMonitorHostResolverWithin $backend): void
+{
+    app()->bind(SiteMonitorHostResolverWithinAdapter::class, static fn (): SiteMonitorHostResolverWithinAdapter => new SiteMonitorHostResolverWithinAdapter($backend));
+    app()->bind(\Capell\SiteMonitor\Contracts\SiteMonitorHostResolverWithin::class, SiteMonitorHostResolverWithinAdapter::class);
+}
+```
+
 ## Contract `Capell\SiteMonitor\Contracts\SiteMonitorHttpClient`
 
 <!-- example: contract Capell\SiteMonitor\Contracts\SiteMonitorHttpClient -->

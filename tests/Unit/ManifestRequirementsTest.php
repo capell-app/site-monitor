@@ -30,6 +30,7 @@ use Capell\SiteMonitor\Models\SiteMonitorTarget;
 use Capell\SiteMonitor\Providers\AdminServiceProvider;
 use Capell\SiteMonitor\Providers\SiteMonitorServiceProvider;
 use Capell\Tests\Support\CapellManifest;
+use Illuminate\Support\ServiceProvider;
 
 it('declares the implemented package surfaces in capell manifest', function (): void {
     $manifest = capell_json_file_array(__DIR__ . '/../../capell.json');
@@ -125,4 +126,13 @@ it('declares the guarded screenshot command in the command map and contribution 
     expect(CapellManifest::screenshotFixtureCommand($path))->toBe('capell:site-monitor-screenshot-fixture')
         ->and(CapellManifest::consoleCommandNames($path))->toContain('capell:site-monitor-screenshot-fixture')
         ->and(CapellManifest::consoleCommandClasses($path))->toContain(SeedSiteMonitorScreenshotFixtureCommand::class);
+});
+
+it('registers both target upgrade migrations for Laravel vendor publishing', function (): void {
+    $paths = ServiceProvider::pathsToPublish(SiteMonitorServiceProvider::class, 'capell-site-monitor-migrations');
+    $migrationFiles = array_map(basename(...), array_keys($paths));
+
+    expect($migrationFiles)
+        ->toContain('2026_11_20_000001_add_checks_windows_and_flapping_to_site_monitor_targets.php')
+        ->toContain('2026_11_20_000002_add_alert_snooze_to_site_monitor_targets.php');
 });

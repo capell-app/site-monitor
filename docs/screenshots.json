@@ -1,7 +1,8 @@
 {
     "package": "site-monitor",
     "composerName": "capell-app/site-monitor",
-    "generatedFor": "deployment-screenshot-runner",
+    "generatedFor": "shared-capell-screenshot-runner",
+    "provenancePolicy": "runner-only-v1",
     "requiresInstalledPackage": true,
     "outputDirectory": "packages/site-monitor/docs/screenshots",
     "entries": [

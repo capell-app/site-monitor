@@ -33,6 +33,8 @@ Site Monitor is an **Available** Capell package in the **Capell Operations** pro
 - `packages/site-monitor/database/migrations/2026_06_13_000002_create_site_monitor_runs_table.php`
 - `packages/site-monitor/database/migrations/2026_06_13_000003_create_site_monitor_incidents_table.php`
 - `packages/site-monitor/database/migrations/2026_10_04_000001_remove_implicit_timestamp_updates_from_site_monitor.php`
+- `packages/site-monitor/database/migrations/2026_11_20_000001_add_checks_windows_and_flapping_to_site_monitor_targets.php`
+- `packages/site-monitor/database/migrations/2026_11_20_000002_add_alert_snooze_to_site_monitor_targets.php`
 
 ### Models
 
@@ -62,6 +64,7 @@ Site Monitor is an **Available** Capell package in the **Capell Operations** pro
 
 - `SiteMonitorDomainExpiryClient`
 - `SiteMonitorHostResolver`
+- `SiteMonitorHostResolverWithin`
 - `SiteMonitorHttpClient`
 
 ### Events
@@ -69,15 +72,23 @@ Site Monitor is an **Available** Capell package in the **Capell Operations** pro
 - `SiteMonitorIncidentManuallyTransitioned`
 - `SiteMonitorIncidentOpened`
 - `SiteMonitorIncidentResolved`
+- `SiteMonitorTargetFlapping`
+
+### Listeners
+
+- `SendSiteMonitorIncidentAlertListener`
 
 ### Actions
 
 - `AuthoriseSiteMonitorTargetSiteAction`
 - `BuildSiteMonitorDashboardAction`
 - `BuildSiteMonitorEvidenceAction`
+- `DeliverSiteMonitorIncidentWebhookAction`
+- `DetectSiteMonitorFlappingAction`
 - `PrepareSiteMonitorScreenshotAction`
 - `GuardSiteMonitorOutboundUrlAction`
 - `OrderSiteMonitorTimestampsAction`
+- `PruneSiteMonitorIncidentsAction`
 - `PruneSiteMonitorRunsAction`
 - `QueueSiteMonitorTargetCheckAction`
 - `ReadSiteMonitorCertificateAction`
@@ -96,12 +107,15 @@ Site Monitor is an **Available** Capell package in the **Capell Operations** pro
 - `SiteMonitorCheckResultData`
 - `SiteMonitorDashboardData`
 - `SiteMonitorEvidenceData`
+- `SiteMonitorIncidentAlertData`
 - `SiteMonitorIncidentData`
 - `SiteMonitorIncidentTransitionData`
+- `SiteMonitorSlackMessageData`
 - `SiteMonitorTargetData`
 
 ### Jobs
 
+- `DeliverSiteMonitorIncidentAlertJob`
 - `RunSiteMonitorTargetJob`
 
 ### Command signatures
@@ -160,7 +174,7 @@ Site Monitor is an **Available** Capell package in the **Capell Operations** pro
 - Required tables: `site_monitor_targets`, `site_monitor_runs`, `site_monitor_incidents`.
 - Models: `RetainsTimestampInstants`, `SiteMonitorIncident`, `SiteMonitorRun`, `SiteMonitorTarget`.
 - Core record references in migrations: `sites via site_id`, `languages via language_id`.
-- Migration files: `2026_06_13_000001_create_site_monitor_targets_table.php`, `2026_06_13_000002_create_site_monitor_runs_table.php`, `2026_06_13_000003_create_site_monitor_incidents_table.php`, `2026_10_04_000001_remove_implicit_timestamp_updates_from_site_monitor.php`.
+- Migration files: `2026_06_13_000001_create_site_monitor_targets_table.php`, `2026_06_13_000002_create_site_monitor_runs_table.php`, `2026_06_13_000003_create_site_monitor_incidents_table.php`, `2026_10_04_000001_remove_implicit_timestamp_updates_from_site_monitor.php`, `2026_11_20_000001_add_checks_windows_and_flapping_to_site_monitor_targets.php`, `2026_11_20_000002_add_alert_snooze_to_site_monitor_targets.php`.
 - Migration impact: run host migrations through the package install flow before opening package surfaces.
 - Deletion/retention behaviour: migrations declare cascade-on-delete relationships and null-on-delete relationships; no timed pruning or retention schedule is declared in `capell.json`.
 

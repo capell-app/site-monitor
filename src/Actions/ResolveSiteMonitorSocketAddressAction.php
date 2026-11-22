@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace Capell\SiteMonitor\Actions;
 
 use Capell\SiteMonitor\Contracts\SiteMonitorHostResolver;
+use Capell\SiteMonitor\Contracts\SiteMonitorHostResolverWithin;
 use Capell\SiteMonitor\Exceptions\UnsafeSiteMonitorTargetException;
+use Capell\SiteMonitor\Support\SiteMonitorDeadline;
 use Capell\SiteMonitor\Support\SiteMonitorNetworkAddressPolicy;
+use Illuminate\Http\Client\ConnectionException;
 use Lorisleiva\Actions\Concerns\AsFake;
 use Lorisleiva\Actions\Concerns\AsObject;
 
@@ -17,9 +20,14 @@ final class ResolveSiteMonitorSocketAddressAction
 
     public function __construct(private readonly SiteMonitorHostResolver $resolver) {}
 
-    public function handle(string $host): string
+    /**
+     * @throws ConnectionException when the deadline passes while the host resolves
+     */
+    public function handle(string $host, ?SiteMonitorDeadline $deadline = null): string
     {
-        $addresses = $this->resolver->addresses($host);
+        $addresses = $deadline instanceof SiteMonitorDeadline && $this->resolver instanceof SiteMonitorHostResolverWithin
+            ? $this->resolver->addressesWithin($host, $deadline)
+            : $this->resolver->addresses($host);
 
         if ($addresses === []) {
             throw new UnsafeSiteMonitorTargetException('target_host_unresolvable', 'Target host could not be resolved before the outbound check.');

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Capell\SiteMonitor\Console\Commands;
 
+use Capell\SiteMonitor\Actions\PruneSiteMonitorIncidentsAction;
 use Capell\SiteMonitor\Actions\PruneSiteMonitorRunsAction;
 use Capell\SiteMonitor\Actions\RunDueSiteMonitorChecksAction;
 use Illuminate\Console\Command;
@@ -37,6 +38,9 @@ final class RunSiteMonitorCommand extends Command
             $count,
             ['count' => $count],
         ));
+
+        // Incidents first: a pruned incident releases the run it pinned for the run prune below.
+        PruneSiteMonitorIncidentsAction::run();
 
         $prunedRuns = PruneSiteMonitorRunsAction::run();
 

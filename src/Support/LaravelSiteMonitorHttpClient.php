@@ -49,7 +49,7 @@ final class LaravelSiteMonitorHttpClient implements SiteMonitorHttpClient
         $redirectChain = [];
 
         try {
-            GuardSiteMonitorOutboundUrlAction::run($url);
+            GuardSiteMonitorOutboundUrlAction::run($url, $deadline);
 
             $response = $this->requestFollowingSafeRedirects($url, $redirectChain, $deadline);
         } catch (UnsafeSiteMonitorTargetException $exception) {
@@ -78,6 +78,7 @@ final class LaravelSiteMonitorHttpClient implements SiteMonitorHttpClient
             errorType: $errorType,
             errorMessage: $errorMessage,
             redirectChain: $redirectChain,
+            body: is_string($target->expected_keyword) && $target->expected_keyword !== '' ? $response->body() : null,
         );
     }
 
@@ -108,7 +109,7 @@ final class LaravelSiteMonitorHttpClient implements SiteMonitorHttpClient
             }
 
             $url = $this->resolveRedirectUrl($url, $location);
-            GuardSiteMonitorOutboundUrlAction::run($url);
+            GuardSiteMonitorOutboundUrlAction::run($url, $deadline);
             $redirectChain[] = $this->redactUrl($url);
         }
 
@@ -189,7 +190,7 @@ final class LaravelSiteMonitorHttpClient implements SiteMonitorHttpClient
         $port = is_int($port) ? $port : (strtolower((string) parse_url($url, PHP_URL_SCHEME)) === 'http' ? 80 : 443);
 
         if (GuardSiteMonitorOutboundUrlAction::privateTargetsAreAllowed()) {
-            return $this->privateTargetRequest($url, $port, $remaining);
+            return $this->privateTargetRequest($url, $port, $deadline);
         }
 
         try {
@@ -215,10 +216,11 @@ final class LaravelSiteMonitorHttpClient implements SiteMonitorHttpClient
      * hop is pinned to the site monitor resolver's address instead, follows no
      * redirects and keeps the same download limit.
      */
-    private function privateTargetRequest(string $url, int $port, float $remaining): Response
+    private function privateTargetRequest(string $url, int $port, SiteMonitorDeadline $deadline): Response
     {
-        $host = GuardSiteMonitorOutboundUrlAction::run($url);
-        $address = ResolveSiteMonitorSocketAddressAction::run($host);
+        $host = GuardSiteMonitorOutboundUrlAction::run($url, $deadline);
+        $address = ResolveSiteMonitorSocketAddressAction::run($host, $deadline);
+        $remaining = $deadline->remainingSeconds();
         $pinnedAddress = str_contains($address, ':') ? '[' . $address . ']' : $address;
 
         try {

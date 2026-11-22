@@ -4,12 +4,12 @@
     "scenarios": {
         "default": {
             "source": {
-                "ref": "c92ce184be4d91c372f35ca125ea25f6c1308599",
-                "commit": "c92ce184be4d91c372f35ca125ea25f6c1308599",
+                "ref": "HEAD",
+                "commit": "75f77f656c7d4f30a0aef4717e05679946cd79bd",
                 "providers": {
                     "Providers/AdminServiceProvider.php": "cd143ccab7f9fd4ef003451ec021731df7d29e3808c280d4ad75a7405f1f5564",
                     "Providers/MigrationMetadataServiceProvider.php": "93b8c09552a9c81ac9edfbd15aacedc8b5e7a27e900272f51fb8fc6137f68160",
-                    "Providers/SiteMonitorServiceProvider.php": "0f5da797626860ca4ac168fba38e3bb54d4e33911bd91b4b1c9084ee1638dd30"
+                    "Providers/SiteMonitorServiceProvider.php": "5f8b82ddcf5d199b84a103582ad923bc7eb2920c5155025a5b32bfc35bca3251"
                 },
                 "configure": null
             },
@@ -86,6 +86,14 @@
                             }
                         ],
                         "shared": false
+                    },
+                    "Capell\\SiteMonitor\\Support\\SiteMonitorAlertHttpFactory": {
+                        "concrete": [
+                            "<package>/src/Providers/SiteMonitorServiceProvider.php",
+                            "static Capell\\SiteMonitor\\Providers\\SiteMonitorServiceProvider():Capell\\SiteMonitor\\Support\\SiteMonitorAlertHttpFactory source=acab405723683a285a4c5276f37467df",
+                            []
+                        ],
+                        "shared": true
                     }
                 },
                 "commands": {
@@ -95,12 +103,22 @@
                 },
                 "config-defaults": {
                     "capell-site-monitor.php": {
+                        "alerts.http_timeout_seconds": 5,
+                        "alerts.mail_to": "",
+                        "alerts.notify_on_recovery": true,
+                        "alerts.queue_connection": null,
+                        "alerts.slack_url": "",
+                        "alerts.webhook_token": "<secret>",
+                        "alerts.webhook_url": "",
                         "allow_private_targets": false,
                         "batch_size": 50,
                         "default_failure_threshold": 2,
                         "default_interval_minutes": 5,
                         "default_timeout_ms": 5000,
                         "domain_expiry_warning_days": 45,
+                        "flap_change_threshold": 4,
+                        "flap_window_runs": 10,
+                        "incident_retention_days": 365,
                         "max_redirects": 5,
                         "max_stale_minutes": 30,
                         "rdap.retry_after_max_ms": 60000,
@@ -126,12 +144,23 @@
                 },
                 "config-keys": [
                     "capell-site-monitor",
+                    "capell-site-monitor.alerts",
+                    "capell-site-monitor.alerts.http_timeout_seconds",
+                    "capell-site-monitor.alerts.mail_to",
+                    "capell-site-monitor.alerts.notify_on_recovery",
+                    "capell-site-monitor.alerts.queue_connection",
+                    "capell-site-monitor.alerts.slack_url",
+                    "capell-site-monitor.alerts.webhook_token",
+                    "capell-site-monitor.alerts.webhook_url",
                     "capell-site-monitor.allow_private_targets",
                     "capell-site-monitor.batch_size",
                     "capell-site-monitor.default_failure_threshold",
                     "capell-site-monitor.default_interval_minutes",
                     "capell-site-monitor.default_timeout_ms",
                     "capell-site-monitor.domain_expiry_warning_days",
+                    "capell-site-monitor.flap_change_threshold",
+                    "capell-site-monitor.flap_window_runs",
+                    "capell-site-monitor.incident_retention_days",
                     "capell-site-monitor.max_redirects",
                     "capell-site-monitor.max_stale_minutes",
                     "capell-site-monitor.rdap",
@@ -164,6 +193,15 @@
                     ]
                 },
                 "listeners": {
+                    "Capell\\SiteMonitor\\Events\\SiteMonitorIncidentOpened": [
+                        "Capell\\SiteMonitor\\Listeners\\SendSiteMonitorIncidentAlertListener"
+                    ],
+                    "Capell\\SiteMonitor\\Events\\SiteMonitorIncidentResolved": [
+                        "Capell\\SiteMonitor\\Listeners\\SendSiteMonitorIncidentAlertListener"
+                    ],
+                    "Capell\\SiteMonitor\\Events\\SiteMonitorTargetFlapping": [
+                        "Capell\\SiteMonitor\\Listeners\\SendSiteMonitorIncidentAlertListener"
+                    ],
                     "eloquent.saving: Capell\\SiteMonitor\\Models\\SiteMonitorTarget": [
                         [
                             "<package>/src/Models/SiteMonitorTarget.php",
@@ -453,6 +491,14 @@
                             }
                         ],
                         "shared": false
+                    },
+                    "Capell\\SiteMonitor\\Support\\SiteMonitorAlertHttpFactory": {
+                        "concrete": [
+                            "<package>/src/Providers/SiteMonitorServiceProvider.php",
+                            "static Capell\\SiteMonitor\\Providers\\SiteMonitorServiceProvider():Capell\\SiteMonitor\\Support\\SiteMonitorAlertHttpFactory source=acab405723683a285a4c5276f37467df",
+                            []
+                        ],
+                        "shared": true
                     }
                 },
                 "commands": {
@@ -462,12 +508,22 @@
                 },
                 "config-defaults": {
                     "capell-site-monitor.php": {
+                        "alerts.http_timeout_seconds": 5,
+                        "alerts.mail_to": "",
+                        "alerts.notify_on_recovery": true,
+                        "alerts.queue_connection": null,
+                        "alerts.slack_url": "",
+                        "alerts.webhook_token": "<secret>",
+                        "alerts.webhook_url": "",
                         "allow_private_targets": false,
                         "batch_size": 50,
                         "default_failure_threshold": 2,
                         "default_interval_minutes": 5,
                         "default_timeout_ms": 5000,
                         "domain_expiry_warning_days": 45,
+                        "flap_change_threshold": 4,
+                        "flap_window_runs": 10,
+                        "incident_retention_days": 365,
                         "max_redirects": 5,
                         "max_stale_minutes": 30,
                         "rdap.retry_after_max_ms": 60000,
@@ -493,12 +549,23 @@
                 },
                 "config-keys": [
                     "capell-site-monitor",
+                    "capell-site-monitor.alerts",
+                    "capell-site-monitor.alerts.http_timeout_seconds",
+                    "capell-site-monitor.alerts.mail_to",
+                    "capell-site-monitor.alerts.notify_on_recovery",
+                    "capell-site-monitor.alerts.queue_connection",
+                    "capell-site-monitor.alerts.slack_url",
+                    "capell-site-monitor.alerts.webhook_token",
+                    "capell-site-monitor.alerts.webhook_url",
                     "capell-site-monitor.allow_private_targets",
                     "capell-site-monitor.batch_size",
                     "capell-site-monitor.default_failure_threshold",
                     "capell-site-monitor.default_interval_minutes",
                     "capell-site-monitor.default_timeout_ms",
                     "capell-site-monitor.domain_expiry_warning_days",
+                    "capell-site-monitor.flap_change_threshold",
+                    "capell-site-monitor.flap_window_runs",
+                    "capell-site-monitor.incident_retention_days",
                     "capell-site-monitor.max_redirects",
                     "capell-site-monitor.max_stale_minutes",
                     "capell-site-monitor.rdap",

@@ -153,12 +153,17 @@ final class SiteMonitorHealthCheck implements ChecksExtensionHealth
     private function staleTargetCount(): int
     {
         $now = CarbonImmutable::now('UTC');
-        $cutoff = $now->subMinutes($this->integerConfig('capell-site-monitor.max_stale_minutes', 30));
+        $minimumStaleMinutes = $this->integerConfig('capell-site-monitor.max_stale_minutes', 30);
 
         return SiteMonitorTarget::query()
             ->where('enabled', true)
             ->get()
-            ->filter(static fn (SiteMonitorTarget $target): bool => $target->last_checked_at === null || $target->last_checked_at->lessThan($cutoff) || $target->last_checked_at->greaterThan($now))
+            ->filter(static function (SiteMonitorTarget $target) use ($now, $minimumStaleMinutes): bool {
+                // A target checked every hour is not stale after 30 minutes: allow one interval to become due and one of grace.
+                $cutoff = $now->subMinutes(max($minimumStaleMinutes, 2 * (int) $target->interval_minutes));
+
+                return $target->last_checked_at === null || $target->last_checked_at->lessThan($cutoff) || $target->last_checked_at->greaterThan($now);
+            })
             ->count();
     }
 

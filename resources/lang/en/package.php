@@ -46,6 +46,11 @@ return [
         'failure_threshold' => 'Failure threshold',
         'expected_status_minimum' => 'Minimum expected status',
         'expected_status_maximum' => 'Maximum expected status',
+        'expected_keyword' => 'Expected keyword',
+        'max_response_ms' => 'Fail above (ms)',
+        'maintenance_starts_at' => 'Maintenance starts',
+        'maintenance_ends_at' => 'Maintenance ends',
+        'alerts_snoozed_until' => 'Snooze alerts until',
         'source_package' => 'Source package',
         'source_key' => 'Source key',
         'route_name' => 'Route name',
@@ -97,6 +102,23 @@ return [
         'checks_queued' => '{0} No due monitor checks were queued.|{1} Queued one due monitor check.|[2,*] Queued :count due monitor checks.',
         'target_check_queued' => 'Monitor check queued.',
     ],
+    'alerts' => [
+        'opened' => [
+            'subject' => ':name is down',
+            'body' => ':name (:url) failed :failures checks in a row. Last status: :status. Last error: :error.',
+            'next_step' => 'Open Monitor incidents in the admin to see the evidence, then resolve the incident once the site is back.',
+        ],
+        'flapping' => [
+            'subject' => ':name is flapping',
+            'body' => ':name (:url) changed between passing and failing :changes times in its recent checks. Individual outage and recovery alerts are paused until it settles.',
+            'next_step' => 'Check the target and its host for an intermittent fault. You will be told once more only if it settles and starts flapping again.',
+        ],
+        'recovered' => [
+            'subject' => ':name has recovered',
+            'body' => ':name (:url) is passing again and its incident has been closed.',
+            'next_step' => 'No action is needed. The incident stays in Monitor incidents for your records.',
+        ],
+    ],
     'commands' => [
         'run' => [
             'description' => 'Run due Site Monitor checks.',
@@ -116,6 +138,7 @@ return [
         ],
     ],
     'validation' => [
+        'snooze_help' => 'Incidents are still recorded while snoozed, but no alert is sent. Alerts resume after this time.',
         'status_range' => 'Maximum expected status must be at least the minimum expected status.',
         'repair_status_range' => 'Repair the expected HTTP status range in this target before relying on its results.',
         'incident_already_open' => 'This target already has an open incident. Review that incident before reopening this one.',

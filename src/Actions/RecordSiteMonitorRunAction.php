@@ -40,12 +40,17 @@ final class RecordSiteMonitorRunAction
 
             $target->forceFill([
                 'current_state' => $result->state,
-                'consecutive_failures' => $result->state === SiteMonitorState::Failing
+                // A maintenance window holds the count at zero so planned downtime never carries into an incident.
+                'consecutive_failures' => $result->state === SiteMonitorState::Failing && ! $target->isInMaintenance($checkedAt)
                     ? ((int) $target->consecutive_failures) + 1
                     : 0,
                 'last_checked_at' => $checkedAt,
                 'next_check_at' => $checkedAt->addMinutes((int) $target->interval_minutes),
             ])->save();
+
+            if (! $target->isInMaintenance($checkedAt)) {
+                DetectSiteMonitorFlappingAction::run($target, $run);
+            }
 
             ReconcileSiteMonitorIncidentAction::run($target->refresh(), $run);
 

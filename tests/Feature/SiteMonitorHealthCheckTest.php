@@ -48,6 +48,18 @@ it('fails incident diagnostics when incidents are open', function (): void {
         ->and($result->passed)->toBeFalse();
 });
 
+it('does not call a slow-interval target stale inside its own two intervals', function (): void {
+    $this->travelTo(CarbonImmutable::parse('2026-06-16 12:00:00', 'UTC'));
+    createHealthSiteMonitorTarget(['interval_minutes' => 60, 'last_checked_at' => CarbonImmutable::parse('2026-06-16 11:00:00', 'UTC')]);
+
+    expect(SiteMonitorHealthCheck::runDiagnostics('site-monitor.target-freshness')->firstOrFail()->passed)->toBeTrue();
+
+    $this->travelTo(CarbonImmutable::parse('2026-06-16 13:01:00', 'UTC'));
+
+    expect(SiteMonitorHealthCheck::runDiagnostics('site-monitor.target-freshness')->firstOrFail()->passed)->toBeFalse();
+    $this->travelBack();
+});
+
 it('treats future check evidence as stale', function (): void {
     $this->travelTo(CarbonImmutable::parse('2026-06-16 12:00:00', 'UTC'));
     createHealthSiteMonitorTarget(['last_checked_at' => CarbonImmutable::parse('2026-06-16 13:00:00', 'UTC')]);

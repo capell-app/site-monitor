@@ -21,6 +21,7 @@ use Capell\SiteMonitor\Models\SiteMonitorTarget;
 use Capell\SiteMonitor\Providers\SiteMonitorServiceProvider;
 use Capell\SiteMonitor\Support\SiteMonitorTimeout;
 use Filament\Actions\Action;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -66,6 +67,11 @@ final class SiteMonitorTargetResource extends Resource
                     TextInput::make('failure_threshold')->label(__('capell-site-monitor::package.fields.failure_threshold'))->numeric()->required()->minValue(1)->default(self::integerConfig('capell-site-monitor.default_failure_threshold', 2)),
                     TextInput::make('expected_status_minimum')->label(__('capell-site-monitor::package.fields.expected_status_minimum'))->numeric()->required()->minValue(100)->maxValue(599)->default(200)->visible(fn (Get $get): bool => $get('check_type') === SiteMonitorCheckType::HttpStatus->value),
                     TextInput::make('expected_status_maximum')->label(__('capell-site-monitor::package.fields.expected_status_maximum'))->numeric()->required()->minValue(100)->maxValue(599)->default(399)->gte('expected_status_minimum')->validationMessages(['gte' => __('capell-site-monitor::package.validation.status_range')])->helperText(__('capell-site-monitor::package.validation.status_range'))->visible(fn (Get $get): bool => $get('check_type') === SiteMonitorCheckType::HttpStatus->value),
+                    TextInput::make('expected_keyword')->label(__('capell-site-monitor::package.fields.expected_keyword'))->maxLength(255)->visible(fn (Get $get): bool => $get('check_type') === SiteMonitorCheckType::HttpStatus->value),
+                    TextInput::make('max_response_ms')->label(__('capell-site-monitor::package.fields.max_response_ms'))->numeric()->minValue(1)->visible(fn (Get $get): bool => $get('check_type') === SiteMonitorCheckType::HttpStatus->value),
+                    DateTimePicker::make('maintenance_starts_at')->label(__('capell-site-monitor::package.fields.maintenance_starts_at')),
+                    DateTimePicker::make('maintenance_ends_at')->label(__('capell-site-monitor::package.fields.maintenance_ends_at'))->after('maintenance_starts_at'),
+                    DateTimePicker::make('alerts_snoozed_until')->label(__('capell-site-monitor::package.fields.alerts_snoozed_until'))->helperText(__('capell-site-monitor::package.validation.snooze_help')),
                     TextInput::make('source_package')->label(__('capell-site-monitor::package.fields.source_package'))->maxLength(255),
                     TextInput::make('source_key')->label(__('capell-site-monitor::package.fields.source_key'))->maxLength(255),
                     TextInput::make('route_name')->label(__('capell-site-monitor::package.fields.route_name'))->maxLength(255),
