@@ -6,6 +6,7 @@
     "kind": "package",
     "capellApiVersion": "^1.0",
     "version": "1.0.0",
+    "launchStatus": "shipped",
     "description": "Checks the web addresses you list for status, slow responses, certificate expiry and domain renewal, with a dashboard and a log of outages.",
     "product": {
         "group": "Capell Operations",
